@@ -1,89 +1,197 @@
 import pandas as pd
-import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
-# 1. Leer y procesar archivo Excel
-df = pd.read_excel("datos/laboratorio.xlsx")
+# =====================================
+# CARGA DE DATOS
+# =====================================
 
-# Convertir a datetime (dejamos el objeto datetime completo para que Plotly lo maneje mejor)
-df["Fecha"] = pd.to_datetime(df["Fecha"])
-df = df.sort_values("Fecha")
+lab = pd.read_excel(
+    "datos/Historial_laboratorio.xlsx",
+    header=8
+)
 
-# Calcular eficiencia de remoción DQO
-df["Eficiencia_DQO"] = ((df["DQO_Afluente"] - df["DQO_Efluente"]) / df["DQO_Afluente"]) * 100
-df["Eficiencia_DQO"] = df["Eficiencia_DQO"].round(1)
+ing = pd.read_excel(
+    "datos/Historial_ingresos.xlsx",
+    header=8
+)
 
+# Eliminar columnas vacías
+lab = lab.loc[:, ~lab.columns.str.contains("^Unnamed")]
+ing = ing.loc[:, ~ing.columns.str.contains("^Unnamed")]
 
-# 2. Configuración del Dashboard (3 filas)
+# =====================================
+# LABORATORIO
+# =====================================
+
+lab["Fecha"] = pd.to_datetime(lab["Fecha"])
+
+# Filtrar DQO
+dqo = lab[
+    lab["Análisis"]
+    .astype(str)
+    .str.contains("DQO", case=False, na=False)
+]
+
+# Convertir filas a columnas
+dqo = dqo.pivot_table(
+    index="Fecha",
+    columns="Lugar",
+    values="Resultado",
+    aggfunc="mean"
+)
+
+dqo = dqo.sort_index()
+
+# Eficiencia
+dqo["Eficiencia_DQO"] = (
+    (dqo["Afluente"] - dqo["Efluente"])
+    / dqo["Afluente"]
+) * 100
+
+dqo["Eficiencia_DQO"] = dqo["Eficiencia_DQO"].round(1)
+
+# =====================================
+# INGRESOS
+# =====================================
+
+ing["Fecha"] = pd.to_datetime(
+    ing["Fecha/Hora de Ingreso"]
+).dt.date
+
+ingresos_diarios = (
+    ing.groupby("Fecha")
+    .agg(
+        Carga_Diaria_kg=("Carga Neta (kg)", "sum"),
+        Camiones=("ID Registro", "count")
+    )
+    .reset_index()
+)
+
+ingresos_diarios["Fecha"] = pd.to_datetime(
+    ingresos_diarios["Fecha"]
+)
+
+# =====================================
+# UNIÓN
+# =====================================
+
+dashboard = pd.merge(
+    dqo.reset_index(),
+    ingresos_diarios,
+    on="Fecha",
+    how="left"
+)
+
+# =====================================
+# RESUMEN
+# =====================================
+
+print("\nResumen general")
+print(dashboard.head())
+
+print("\nEstadísticas")
+print(dashboard.describe())
+
+# =====================================
+# DASHBOARD
+# =====================================
+
 fig = make_subplots(
-    rows=3,
+    rows=4,
     cols=1,
-    shared_xaxes=True, # Comparte el eje X para que al hacer zoom en uno, se muevan todos
-    vertical_spacing=0.08,
+    shared_xaxes=True,
+    vertical_spacing=0.05,
     subplot_titles=(
-        "Evolución de DQO (Afluente vs Efluente)",
-        "Tendencia de Eficiencia de Remoción",
-        "Eficiencia Diaria por Muestreo"
+        "DQO Afluente vs Efluente",
+        "Eficiencia de Remoción",
+        "Carga Diaria Recibida",
+        "Cantidad de Camiones"
     )
 )
 
-# --- Fila 1: Afluente vs Efluente (Juntos para comparar la caída) ---
+# ----------------------------
+# DQO
+# ----------------------------
+
 fig.add_trace(
     go.Scatter(
-        x=df["Fecha"], y=df["DQO_Afluente"],
-        mode="lines+markers", name="DQO Afluente",
-        line=dict(color="firebrick")
+        x=dashboard["Fecha"],
+        y=dashboard["Afluente"],
+        mode="lines+markers",
+        name="DQO Afluente"
     ),
-    row=1, col=1
+    row=1,
+    col=1
 )
+
 fig.add_trace(
     go.Scatter(
-        x=df["Fecha"], y=df["DQO_Efluente"],
-        mode="lines+markers", name="DQO Efluente",
-        line=dict(color="forestgreen")
+        x=dashboard["Fecha"],
+        y=dashboard["Efluente"],
+        mode="lines+markers",
+        name="DQO Efluente"
     ),
-    row=1, col=1
+    row=1,
+    col=1
 )
-fig.update_yaxes(title_text="DQO (mg/L)", row=1, col=1)
 
+# ----------------------------
+# EFICIENCIA
+# ----------------------------
 
-# --- Fila 2: Eficiencia en Línea ---
 fig.add_trace(
     go.Scatter(
-        x=df["Fecha"], y=df["Eficiencia_DQO"],
-        mode="lines+markers", name="Eficiencia (%)",
-        line=dict(color="royalblue", dash="dash")
+        x=dashboard["Fecha"],
+        y=dashboard["Eficiencia_DQO"],
+        mode="lines+markers",
+        name="Eficiencia (%)"
     ),
-    row=2, col=1
+    row=2,
+    col=1
 )
-fig.update_yaxes(title_text="Eficiencia (%)", row=2, col=1)
 
+# ----------------------------
+# CARGA DIARIA
+# ----------------------------
 
-# --- Fila 3: Eficiencia Diaria en Barras ---
 fig.add_trace(
     go.Bar(
-        x=df["Fecha"], y=df["Eficiencia_DQO"],
-        name="Eficiencia diaria",
-        marker_color="lightskyblue"
+        x=dashboard["Fecha"],
+        y=dashboard["Carga_Diaria_kg"],
+        name="Carga diaria (kg)"
     ),
-    row=3, col=1
+    row=3,
+    col=1
 )
-fig.update_yaxes(title_text="Eficiencia (%)", row=3, col=1)
 
+# ----------------------------
+# CAMIONES
+# ----------------------------
 
-# 3. Diseño y formato global
+fig.add_trace(
+    go.Bar(
+        x=dashboard["Fecha"],
+        y=dashboard["Camiones"],
+        name="Camiones"
+    ),
+    row=4,
+    col=1
+)
+
+# =====================================
+# FORMATO
+# =====================================
+
 fig.update_layout(
-    height=950,
-    title=dict(
-        text="<b>Panel de Control - Planta de RILES (DQO)</b>",
-        font=dict(size=20)
-    ),
-    template="plotly_white", # Fondo blanco más limpio para reportes
-    hovermode="x unified"    # Muestra los datos de todas las curvas al pasar el mouse
+    height=1200,
+    title="Dashboard Planta RILES",
+    hovermode="x unified"
 )
 
-# Formato de fecha uniforme para todos los ejes X
-fig.update_xaxes(tickformat="%d-%m-%y", dtick="D1") # Fuerza marcas diarias si hay pocos datos
+fig.update_xaxes(
+    tickformat="%d-%m-%Y"
+)
 
 fig.show()
+
