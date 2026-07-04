@@ -1,2 +1,13 @@
+# Entorno virtual
 venv/
+
+# Caché de Python
 __pycache__/
+*.py[cod]
+
+# Configuración local
+.vscode/
+.streamlit/
+
+# Archivos generados automáticamente
+datos_generados/
