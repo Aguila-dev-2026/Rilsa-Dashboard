@@ -69,12 +69,21 @@ def importar_bloque_energia(df, columna_dia, columna_m3, columna_kwh, fila_mes, 
     datos["M3"] = pd.to_numeric(datos["M3"], errors="coerce")
     datos["KWH"] = pd.to_numeric(datos["KWH"], errors="coerce")
 
+    # Eliminar filas sin datos útiles de energía
     datos = datos.dropna(subset=["M3", "KWH"], how="all")
+
+# Regla de calidad de datos:
+# M3 y KWH no pueden ser negativos.
+# Si aparecen negativos, normalmente vienen de fórmulas incompletas en Excel.
+# Esos registros se eliminan antes de generar energia.xlsx.
     datos = datos[
     (datos["M3"] >= 0)
     &
     (datos["KWH"] >= 0)
 ].copy()
+
+# Calcular eficiencia energética.
+# Si M3 es 0, el resultado será NaN y no romperá el dashboard.
     datos["KWH_por_M3"] = datos["KWH"] / datos["M3"]
     datos["KWH_por_M3"] = datos["KWH_por_M3"].replace([float("inf"), -float("inf")], pd.NA)
 
