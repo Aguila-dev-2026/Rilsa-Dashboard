@@ -14,3 +14,4 @@ __pycache__/
 
 # Archivos generados automáticamente
 datos_generados/
+output/
