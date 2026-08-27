@@ -12,7 +12,9 @@ class InformeImpresionTests(unittest.TestCase):
             {"Fecha": "2026-01-02", "Area": "Planta Aeróbica", "Punto": "R1", "Parametro": "pH", "Valor": 7.1, "Unidad": "pH"},
         ])
         html = generar_informe_impresion(datos)
+        self.assertIn("riles-print-root", html)
         self.assertIn("riles-print-report", html)
+        self.assertIn("color-scheme:light", html)
         self.assertIn("Físico-químico", html)
         self.assertIn("Planta Aeróbica", html)
         self.assertIn("Informe operacional completo", html)
