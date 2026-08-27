@@ -49,7 +49,7 @@ TIPO_TENDENCIA_RECOMENDADA = {
     "DQO TK3 [mg/l]": "Theil–Sen",
     "Conductividad [mS]": "Theil–Sen",
     "Turbiedad [NTU]": "Theil–Sen",
-    "pH": "Mediana del período",
+    "pH": "Theil–Sen",
 }
 
 
@@ -88,16 +88,6 @@ def calcular_tendencia(datos, parametro, ajustes=None):
             .mean()
         )
         return tendencia[["Fecha", "Tendencia"]], metodo
-
-    if metodo == "Mediana del período":
-        mediana = validos["Valor"].median()
-        tendencia = pd.DataFrame(
-            {
-                "Fecha": [validos["Fecha"].iloc[0], validos["Fecha"].iloc[-1]],
-                "Tendencia": [mediana, mediana],
-            }
-        )
-        return tendencia, metodo
 
     origen = validos["Fecha"].iloc[0]
     x = (validos["Fecha"] - origen).dt.total_seconds().to_numpy() / 86400
@@ -420,30 +410,34 @@ def mostrar_dashboard_area(nombre_area, titulo):
                 step=1,
                 key=f"periodos_ewma_{parametro}",
             )
-        elif parametro == "pH":
-            st.code("Límite inferior ≤ pH ≤ Límite superior", language=None)
-            ajustes_tendencia["ph_minimo"] = st.number_input(
-                "Límite inferior",
-                value=6.0,
-                step=0.1,
-                format="%.1f",
-                key="ph_limite_inferior",
-            )
-            ajustes_tendencia["ph_maximo"] = st.number_input(
-                "Límite superior",
-                value=8.0,
-                step=0.1,
-                format="%.1f",
-                key="ph_limite_superior",
-            )
-            if ajustes_tendencia["ph_minimo"] >= ajustes_tendencia["ph_maximo"]:
-                st.error("El límite inferior debe ser menor que el superior.")
         else:
             st.code(
-                "pendiente = mediana((y₂ − y₁) / (x₂ − x₁))",
+                "pendiente = valor central de (y₂ − y₁) / (x₂ − x₁)",
                 language=None,
             )
             st.caption("Theil–Sen no requiere constantes numéricas editables.")
+
+            if parametro == "pH":
+                st.code("Límite inferior ≤ pH ≤ Límite superior", language=None)
+                ajustes_tendencia["ph_minimo"] = st.number_input(
+                    "Límite inferior",
+                    value=6.0,
+                    step=0.1,
+                    format="%.1f",
+                    key="ph_limite_inferior",
+                )
+                ajustes_tendencia["ph_maximo"] = st.number_input(
+                    "Límite superior",
+                    value=8.0,
+                    step=0.1,
+                    format="%.1f",
+                    key="ph_limite_superior",
+                )
+                if (
+                    ajustes_tendencia["ph_minimo"]
+                    >= ajustes_tendencia["ph_maximo"]
+                ):
+                    st.error("El límite inferior debe ser menor que el superior.")
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Registros", len(datos_filtrados))
