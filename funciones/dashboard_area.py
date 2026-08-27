@@ -409,13 +409,20 @@ def mostrar_dashboard_area(nombre_area, titulo):
         fig = px.line(datos_linea, markers=True, **opciones)
 
     aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad)
-    metodo_tendencia = agregar_tendencia(
-        fig,
-        datos_filtrados,
-        parametro,
-        unidad,
+
+    mostrar_tendencia = st.sidebar.toggle(
+        "Mostrar tendencia",
+        value=True,
+        key="mostrar_tendencia",
     )
-    st.sidebar.caption(f"Tendencia automática: {metodo_tendencia}.")
+    if mostrar_tendencia:
+        metodo_tendencia = agregar_tendencia(
+            fig,
+            datos_filtrados,
+            parametro,
+            unidad,
+        )
+        st.sidebar.caption(f"Tendencia automática: {metodo_tendencia}.")
 
     fecha_inicio = datos_filtrados["Fecha"].min().normalize()
     fecha_fin = datos_filtrados["Fecha"].max().normalize()
