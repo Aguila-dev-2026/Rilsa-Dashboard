@@ -126,9 +126,17 @@ def aplicar_tema(modo: str) -> None:
 
         .stButton > button[kind="primary"] {{
           background: linear-gradient(135deg, #6D1F2B, #48121A);
-          border: 1px solid rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.18);
           border-radius: 11px;
           box-shadow: 0 8px 22px rgba(72,18,26,0.24);
+          color: #FFFDF8 !important;
+          font-weight: 750;
+        }}
+
+        .stButton > button[kind="primary"] p,
+        .stButton > button[kind="primary"] span {{
+          color: #FFFDF8 !important;
+          font-weight: 750;
         }}
         </style>
         """,
