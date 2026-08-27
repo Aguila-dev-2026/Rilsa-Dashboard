@@ -13,6 +13,7 @@ from funciones.filtros import (
     filtrar_por_parametro,
     seleccionar_rango_fecha,
 )
+from funciones.tablas import preparar_columnas_visibles
 
 
 CONFIGURACION_GRAFICO = {
@@ -439,7 +440,8 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
 
 def preparar_tabla_premium(datos):
     tabla = (
-        datos.sort_values("Fecha", ascending=False)
+        preparar_columnas_visibles(datos)
+        .sort_values("Fecha", ascending=False)
         .rename(
             columns={
                 "Area": "Área",
