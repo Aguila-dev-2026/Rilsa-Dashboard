@@ -8,6 +8,9 @@ __pycache__/
 # Configuración local
 .vscode/
 .streamlit/
+.env
+.env.*
+!.env.example
 
 # Archivos generados automáticamente
 datos_generados/
