@@ -23,21 +23,16 @@ FILA_ENCABEZADOS = 1
 NOMBRE_AREA = "Físico-químico"
 
 # Solo estas mediciones entran al dashboard. Las lecturas acumuladas, horas de
-# bombas, columnas vacías y campos con "-" quedan fuera de la importación.
+# bombas, columnas vacías, campos con "-" y parámetros trasladados a Planta
+# Alta quedan fuera de la importación.
 COLUMNAS_PERMITIDAS = {
     "ingresos [ton]": "Ingresos [Ton]",
     "consumo p. cationico [kg]": "Consumo P. Catiónico [kg]",
     "consumo p. anionico [kg]": "Consumo P. Aniónico [kg]",
     "consumo pac [kg]": "Consumo PAC [kg]",
     "consumo cal [kg]": "Consumo Cal [kg]",
-    "% humedad lodo 1": "% Humedad Lodo 1",
-    "% humedad lodo 2": "% Humedad Lodo 2",
     "energia electrica consumida": "Energía eléctrica consumida",
     "[m3]": "Volumen TK3 [m3]",
-    "dqo tk3 [mg/l]": "DQO TK3 [mg/l]",
-    "ph": "pH",
-    "conductividad [ms]": "Conductividad [mS]",
-    "turbiedad [ntu]": "Turbiedad [NTU]",
 }
 
 
