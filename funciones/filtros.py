@@ -77,28 +77,35 @@ ORDEN_PUNTOS = [
 
 
 def seleccionar_rango_fecha(fecha_min, fecha_max, clave="general"):
-    """Muestra el calendario sin necesitar cargar previamente todas las filas."""
+    """Muestra y conserva el calendario durante la sesión actual."""
     fecha_min = fecha_min.date() if hasattr(fecha_min, "date") else fecha_min
     fecha_max = fecha_max.date() if hasattr(fecha_max, "date") else fecha_max
     fecha_inicio_predeterminada = max(
         fecha_min,
         fecha_max - timedelta(days=29),
     )
+    clave_inicio = f"fecha_inicio_30_dias_{clave}"
+    clave_fin = f"fecha_fin_30_dias_{clave}"
+
+    # Los valores predeterminados se asignan una única vez por sesión.
+    # Streamlit elimina session_state cuando el usuario cierra la app.
+    if clave_inicio not in st.session_state:
+        st.session_state[clave_inicio] = fecha_inicio_predeterminada
+    if clave_fin not in st.session_state:
+        st.session_state[clave_fin] = fecha_max
 
     st.sidebar.subheader("Período de consulta")
     fecha_inicio = st.sidebar.date_input(
         "Fecha inicial",
-        value=fecha_inicio_predeterminada,
         min_value=fecha_min,
         max_value=fecha_max,
-        key=f"fecha_inicio_30_dias_{clave}",
+        key=clave_inicio,
     )
     fecha_fin = st.sidebar.date_input(
         "Fecha final",
-        value=fecha_max,
         min_value=fecha_min,
         max_value=fecha_max,
-        key=f"fecha_fin_30_dias_{clave}",
+        key=clave_fin,
     )
 
     if fecha_inicio > fecha_fin:
@@ -122,6 +129,7 @@ def filtrar_por_fecha(datos, columna_fecha="Fecha", clave="general"):
         & (datos[columna_fecha].dt.date <= fecha_fin)
     )
     return datos[filtro].copy()
+
 
 def filtrar_dimension(
     datos,
