@@ -5,12 +5,20 @@ def filtrar_por_fecha(datos, columna_fecha="Fecha"):
     fecha_min = datos[columna_fecha].min().date()
     fecha_max = datos[columna_fecha].max().date()
 
-    fecha_inicio, fecha_fin = st.sidebar.date_input(
-        "Rango de fechas",
-        value=(fecha_min, fecha_max),
+    st.sidebar.subheader("Período de consulta")
+    fecha_inicio = st.sidebar.date_input(
+        "Fecha inicial",
+        value=fecha_min,
         min_value=fecha_min,
         max_value=fecha_max,
-        key="rango_fechas"
+        key="fecha_inicio",
+    )
+    fecha_fin = st.sidebar.date_input(
+        "Fecha final",
+        value=fecha_max,
+        min_value=fecha_min,
+        max_value=fecha_max,
+        key="fecha_fin",
     )
 
     if fecha_inicio > fecha_fin:
@@ -32,7 +40,7 @@ def filtrar_por_parametro(datos, columna_parametro="Parametro"):
     parametro_seleccionado = st.sidebar.selectbox(
         "Parámetro a visualizar",
         parametros,
-        key="selector_parametro"
+        key="selector_parametro",
     )
 
     return datos[
@@ -45,7 +53,7 @@ def filtrar_por_quimicos(datos, columnas_quimicos):
         "Seleccionar químicos",
         columnas_quimicos,
         default=columnas_quimicos,
-        key="selector_quimicos"
+        key="selector_quimicos",
     )
 
     if not quimicos_sel:
