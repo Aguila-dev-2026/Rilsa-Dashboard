@@ -166,9 +166,12 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     vino = "#A94353"
     vino_oscuro = "#6D1F2B"
     cobre = "#D99A68"
+    oscuro = tema_nativo_oscuro()
+    texto = "#FAFAFA" if oscuro else "#171514"
+    texto_eje = "#C8CBD4" if oscuro else "#332E2A"
     cuadricula = (
         "rgba(250,250,250,0.12)"
-        if tema_nativo_oscuro()
+        if oscuro
         else "rgba(23,21,20,0.24)"
     )
 
@@ -205,9 +208,12 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
             text=f"<b>{parametro}</b>",
             x=0.015,
             xanchor="left",
-            font=dict(size=21),
+            font=dict(size=21, color=texto),
         ),
-        font=dict(family='"Source Sans Pro", sans-serif'),
+        font=dict(
+            family='"Source Sans Pro", sans-serif',
+            color=texto,
+        ),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         hoverlabel=dict(
@@ -225,7 +231,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         showgrid=False,
         showline=True,
         linewidth=1,
-        tickfont=dict(size=12),
+        tickfont=dict(size=12, color=texto_eje),
     )
     fig.update_yaxes(
         title=f"Valor ({unidad})" if unidad else "Valor",
@@ -234,8 +240,8 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         gridcolor=cuadricula,
         zeroline=False,
         showline=False,
-        tickfont=dict(size=12),
-        title_font=dict(size=12),
+        tickfont=dict(size=12, color=texto_eje),
+        title_font=dict(size=12, color=texto_eje),
         title_standoff=22,
         automargin=True,
     )
