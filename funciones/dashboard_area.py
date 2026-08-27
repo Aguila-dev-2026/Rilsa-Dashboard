@@ -19,6 +19,22 @@ COBRE = "#B36F3D"
 TINTA = "#282422"
 LINEA_SUAVE = "rgba(117,110,103,0.16)"
 
+TIPO_GRAFICO_RECOMENDADO = {
+    "Ingresos [Ton]": "Barras",
+    "Consumo P. Catiónico [kg]": "Barras",
+    "Consumo P. Aniónico [kg]": "Barras",
+    "Consumo PAC [kg]": "Barras",
+    "Consumo Cal [kg]": "Barras",
+    "% Humedad Lodo 1": "Líneas",
+    "% Humedad Lodo 2": "Líneas",
+    "Energía eléctrica consumida": "Barras",
+    "Volumen TK3 [m3]": "Líneas",
+    "DQO TK3 [mg/l]": "Líneas",
+    "pH": "Líneas",
+    "Conductividad [mS]": "Líneas",
+    "Turbiedad [NTU]": "Líneas",
+}
+
 
 def tema_nativo_oscuro():
     try:
@@ -211,12 +227,6 @@ def mostrar_dashboard_area(nombre_area, titulo):
         st.info("No hay datos para el parámetro seleccionado.")
         return
 
-    tipo_grafico = st.sidebar.selectbox(
-        "Tipo de gráfico",
-        ["Líneas", "Barras"],
-        key="tipo_grafico",
-    )
-
     datos_filtrados = datos_filtrados.sort_values("Fecha")
     parametro = datos_filtrados["Parametro"].iat[0]
     unidad = (
@@ -224,6 +234,18 @@ def mostrar_dashboard_area(nombre_area, titulo):
         if datos_filtrados["Unidad"].notna().any()
         else ""
     )
+
+    tipo_recomendado = TIPO_GRAFICO_RECOMENDADO.get(parametro, "Líneas")
+    if st.session_state.get("parametro_tipo_grafico") != parametro:
+        st.session_state["tipo_grafico"] = tipo_recomendado
+        st.session_state["parametro_tipo_grafico"] = parametro
+
+    tipo_grafico = st.sidebar.selectbox(
+        "Tipo de gráfico",
+        ["Líneas", "Barras"],
+        key="tipo_grafico",
+    )
+    st.sidebar.caption(f"Recomendación para este parámetro: {tipo_recomendado}.")
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Registros", len(datos_filtrados))
