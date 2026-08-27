@@ -53,6 +53,16 @@ def aplicar_identidad_volta():
           [data-testid="stSidebar"] [data-testid="stToggle"] [role="switch"] * {
             color: #FFFFFF !important;
           }
+          [data-testid="stSidebar"] [data-testid="stToggle"] [data-checked="false"],
+          [data-testid="stSidebar"] [data-testid="stToggle"] label[data-baseweb="checkbox"] > div,
+          [data-testid="stSidebar"] [data-baseweb="checkbox"] > div {
+            background-color: #33495E !important;
+            border-color: #AFC1D1 !important;
+          }
+          [data-testid="stSidebar"] [data-testid="stToggle"] [data-checked="true"] {
+            background-color: #67C5E8 !important;
+            border-color: #FFFFFF !important;
+          }
           [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,.22); }
           h1, h2, h3 { color: #263B70 !important; letter-spacing: -.02em; }
           [data-testid="stMetric"] {
