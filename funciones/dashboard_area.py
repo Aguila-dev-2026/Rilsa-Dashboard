@@ -53,8 +53,9 @@ TIPO_TENDENCIA_RECOMENDADA = {
 }
 
 
-def calcular_tendencia(datos, parametro):
+def calcular_tendencia(datos, parametro, ajustes=None):
     """Calcula la tendencia recomendada usando solo valores válidos del filtro."""
+    ajustes = ajustes or {}
     validos = (
         datos.loc[
             datos["Valor"].notna() & datos["Valor"].ne(0),
@@ -79,6 +80,7 @@ def calcular_tendencia(datos, parametro):
         else:
             ventana = 30
 
+        ventana = int(ajustes.get("periodos_ewma", ventana))
         tendencia = validos.copy()
         tendencia["Tendencia"] = (
             tendencia["Valor"]
@@ -116,8 +118,9 @@ def calcular_tendencia(datos, parametro):
     return tendencia, metodo
 
 
-def agregar_tendencia(fig, datos, parametro, unidad):
-    tendencia, metodo = calcular_tendencia(datos, parametro)
+def agregar_tendencia(fig, datos, parametro, unidad, ajustes=None):
+    ajustes = ajustes or {}
+    tendencia, metodo = calcular_tendencia(datos, parametro, ajustes)
     if tendencia is None:
         return metodo
 
@@ -134,24 +137,29 @@ def agregar_tendencia(fig, datos, parametro, unidad):
         ),
     )
     if parametro == "pH":
-        fig.add_hrect(
-            y0=6,
-            y1=8,
+        limite_inferior = float(ajustes.get("ph_minimo", 6))
+        limite_superior = float(ajustes.get("ph_maximo", 8))
+        if limite_inferior < limite_superior:
+            fig.add_hrect(
+                y0=limite_inferior,
+                y1=limite_superior,
             fillcolor="rgba(46,106,77,0.14)",
             line_width=0,
             layer="below",
-            annotation_text="Banda operativa pH 6–8",
-            annotation_position="top left",
-            annotation_font=dict(color="#4F9A75", size=12),
-        )
-        fig.add_hline(
-            y=6,
-            line=dict(color="rgba(79,154,117,0.72)", width=1, dash="dash"),
-        )
-        fig.add_hline(
-            y=8,
-            line=dict(color="rgba(79,154,117,0.72)", width=1, dash="dash"),
-        )
+                annotation_text=(
+                    f"Banda operativa pH {limite_inferior:g}–{limite_superior:g}"
+                ),
+                annotation_position="top left",
+                annotation_font=dict(color="#4F9A75", size=12),
+            )
+            fig.add_hline(
+                y=limite_inferior,
+                line=dict(color="rgba(79,154,117,0.72)", width=1, dash="dash"),
+            )
+            fig.add_hline(
+                y=limite_superior,
+                line=dict(color="rgba(79,154,117,0.72)", width=1, dash="dash"),
+            )
 
     fig.update_layout(
         legend=dict(
@@ -376,6 +384,62 @@ def mostrar_dashboard_area(nombre_area, titulo):
     )
     st.sidebar.caption(f"Gráfico recomendado: {tipo_recomendado}.")
 
+    metodo_recomendado = TIPO_TENDENCIA_RECOMENDADA.get(
+        parametro,
+        "Theil–Sen",
+    )
+    ajustes_tendencia = {}
+    with st.sidebar.expander("Ajustar cálculo de tendencia"):
+        if metodo_recomendado == "EWMA adaptativa":
+            cantidad_validos = int(
+                (
+                    datos_filtrados["Valor"].notna()
+                    & datos_filtrados["Valor"].ne(0)
+                ).sum()
+            )
+            if cantidad_validos <= 7:
+                periodos_recomendados = 3
+            elif cantidad_validos <= 31:
+                periodos_recomendados = 7
+            elif cantidad_validos <= 90:
+                periodos_recomendados = 14
+            else:
+                periodos_recomendados = 30
+
+            st.code("α = 2 / (N + 1)", language=None)
+            ajustes_tendencia["periodos_ewma"] = st.number_input(
+                "N · períodos",
+                min_value=2,
+                max_value=90,
+                value=periodos_recomendados,
+                step=1,
+                key=f"periodos_ewma_{parametro}",
+            )
+        elif parametro == "pH":
+            st.code("Límite inferior ≤ pH ≤ Límite superior", language=None)
+            ajustes_tendencia["ph_minimo"] = st.number_input(
+                "Límite inferior",
+                value=6.0,
+                step=0.1,
+                format="%.1f",
+                key="ph_limite_inferior",
+            )
+            ajustes_tendencia["ph_maximo"] = st.number_input(
+                "Límite superior",
+                value=8.0,
+                step=0.1,
+                format="%.1f",
+                key="ph_limite_superior",
+            )
+            if ajustes_tendencia["ph_minimo"] >= ajustes_tendencia["ph_maximo"]:
+                st.error("El límite inferior debe ser menor que el superior.")
+        else:
+            st.code(
+                "pendiente = mediana((y₂ − y₁) / (x₂ − x₁))",
+                language=None,
+            )
+            st.caption("Theil–Sen no requiere constantes numéricas editables.")
+
     col1, col2, col3 = st.columns(3)
     col1.metric("Registros", len(datos_filtrados))
     col2.metric("Promedio", f"{datos_filtrados['Valor'].mean():.2f} {unidad}".strip())
@@ -421,6 +485,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
             datos_filtrados,
             parametro,
             unidad,
+            ajustes_tendencia,
         )
         st.sidebar.caption(f"Tendencia automática: {metodo_tendencia}.")
 
