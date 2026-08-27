@@ -69,14 +69,29 @@ def convertir_medicion(valor: object) -> tuple[float | None, str]:
 
 
 def normalizar_turno(valor: object) -> str:
+    """Conserva turno, frecuencia o tipo de muestra sin fragmentar mayúsculas."""
     if valor is None:
         return ""
-    texto = str(valor).strip().casefold()
-    return {
+
+    original = str(valor).strip()
+    if not original or original in {"-", "—", "–", "−"}:
+        return ""
+
+    texto = original.casefold()
+    normalizados = {
         "mañana": "Mañana",
         "tarde": "Tarde",
         "noche": "Noche",
-    }.get(texto, "")
+        "medio dia": "Medio día",
+        "mediodía": "Medio día",
+        "compuesta": "Compuesta",
+        "compuesto": "Compuesta",
+        "puntual": "Puntual",
+        "contramuestra": "Contramuestra",
+        "purga r1": "Purga R1",
+        "lodo fondo cono (purga)": "Lodo fondo cono (purga)",
+    }
+    return normalizados.get(texto, original[:60])
 
 
 def agregar_registro(
