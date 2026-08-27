@@ -102,58 +102,6 @@ def aplicar_tema(modo: str) -> None:
           border-color: {tema["linea"]};
         }}
 
-        [class*="st-key-tema_visual"] {{
-          position: fixed;
-          top: 0.7rem;
-          right: 1rem;
-          z-index: 1002;
-          width: 108px;
-          min-height: 34px;
-          padding: 0.12rem 0.48rem;
-          background: {tema["panel"]};
-          border: 1px solid {tema["linea"]};
-          border-radius: 999px;
-          box-shadow: {tema["sombra"]};
-        }}
-
-        [class*="st-key-tema_visual"]::before,
-        [class*="st-key-tema_visual"]::after {{
-          position: absolute;
-          top: 50%;
-          transform: translateY(-52%);
-          color: {tema["muted"]};
-          font-size: 0.83rem;
-          line-height: 1;
-          pointer-events: none;
-        }}
-
-        [class*="st-key-tema_visual"]::before {{
-          content: "☼";
-          left: 0.48rem;
-        }}
-
-        [class*="st-key-tema_visual"]::after {{
-          content: "☾";
-          right: 0.48rem;
-        }}
-
-        [class*="st-key-tema_visual"] [data-testid="stSlider"] {{
-          padding: 0 1.05rem;
-          margin: 0;
-        }}
-
-        [class*="st-key-tema_visual"] [data-testid="stSlider"] > div {{
-          min-height: 30px;
-        }}
-
-        [class*="st-key-tema_visual"] [role="slider"] {{
-          width: 0.76rem;
-          height: 0.76rem;
-          background: #B36F3D;
-          border-color: #FFF8EC;
-          box-shadow: 0 0 0 2px rgba(179,111,61,0.16);
-        }}
-
         .stButton > button[kind="primary"] {{
           background: linear-gradient(135deg, #6D1F2B, #48121A);
           border: 1px solid rgba(255,255,255,0.18);
@@ -175,22 +123,11 @@ def aplicar_tema(modo: str) -> None:
 
 
 def configurar_tema() -> str:
-    if "tema_visual" not in st.session_state:
-        try:
-            st.session_state.tema_visual = (
-                1 if st.context.theme.type == "dark" else 0
-            )
-        except (AttributeError, RuntimeError):
-            st.session_state.tema_visual = 0
+    try:
+        modo = "dark" if st.context.theme.type == "dark" else "light"
+    except (AttributeError, RuntimeError):
+        modo = "light"
 
-    valor = st.slider(
-        "Tema visual",
-        min_value=0,
-        max_value=1,
-        step=1,
-        key="tema_visual",
-        label_visibility="collapsed",
-    )
-    modo = "dark" if valor == 1 else "light"
+    st.session_state.tema_visual = 1 if modo == "dark" else 0
     aplicar_tema(modo)
     return modo
