@@ -137,7 +137,4 @@ datos_para_impresion = st.session_state.get("datos_para_impresion")
 if datos_para_impresion is not None:
     from funciones.informe_impresion import generar_informe_impresion
 
-    st.markdown(
-        generar_informe_impresion(datos_para_impresion),
-        unsafe_allow_html=True,
-    )
+    st.html(generar_informe_impresion(datos_para_impresion))
