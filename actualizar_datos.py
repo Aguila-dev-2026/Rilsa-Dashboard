@@ -75,7 +75,11 @@ def huella_archivo(ruta: Path) -> dict:
 
 
 def base_vigente_y_sin_cambios(huellas: list[dict]) -> bool:
-    if not BASE_DATOS.exists():
+    if not (
+        BASE_DATOS.exists()
+        and SALIDA_FISICO_QUIMICO.exists()
+        and SALIDA_ANALISIS_AEROBICO.exists()
+    ):
         return False
 
     try:
