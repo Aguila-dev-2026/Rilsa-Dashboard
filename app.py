@@ -1,17 +1,16 @@
 from pathlib import Path
+import sqlite3
 
 import streamlit as st
 
 from dashboards.fisico_quimico import mostrar_fisico_quimico
 from funciones.cargar_datos import CARPETA_GENERADOS
 from funciones.dashboard_area import mostrar_dashboard_area
-from importar import (
-    ENTRADA_PREDETERMINADA as ENTRADA_FISICO_QUIMICO,
-    importar_fisico_quimico,
-)
-from importar_analisis_aerobico import (
-    ENTRADA_PREDETERMINADA as ENTRADA_ANALISIS_AEROBICO,
-    importar_analisis_aerobico,
+from actualizar_datos import (
+    BASE_DATOS,
+    ENTRADA_ANALISIS_AEROBICO,
+    ENTRADA_FISICO_QUIMICO,
+    actualizar_datos,
 )
 
 
@@ -39,14 +38,31 @@ pagina = st.sidebar.radio(
 st.sidebar.divider()
 st.sidebar.subheader("Datos operacionales")
 
+mensaje_actualizacion = st.session_state.pop("mensaje_actualizacion", None)
+if mensaje_actualizacion:
+    tipo_mensaje, texto_mensaje = mensaje_actualizacion
+    getattr(st.sidebar, tipo_mensaje)(texto_mensaje)
+
 if st.sidebar.button("Actualizar desde planillas", type="primary", use_container_width=True):
     try:
-        importar_fisico_quimico()
-        importar_analisis_aerobico()
-    except (FileNotFoundError, ValueError, OSError) as error:
-        st.sidebar.error(f"No fue posible importar los datos: {error}")
+        with st.spinner("Validando y actualizando los datos..."):
+            resultado = actualizar_datos()
+    except (FileNotFoundError, ValueError, OSError, sqlite3.DatabaseError) as error:
+        st.sidebar.error(f"No fue posible actualizar los datos: {error}")
     else:
-        st.sidebar.success("Datos actualizados correctamente.")
+        st.cache_data.clear()
+        if resultado["estado"] == "sin_cambios":
+            mensaje = (
+                "info",
+                f"Las planillas no cambiaron. Se conservan "
+                f"{resultado['registros']:,} registros.",
+            )
+        else:
+            mensaje = (
+                "success",
+                f"Datos actualizados: {resultado['registros']:,} registros.",
+            )
+        st.session_state["mensaje_actualizacion"] = mensaje
         st.rerun()
 
 def mostrar_ruta_origen(ruta):
@@ -61,7 +77,7 @@ st.sidebar.caption(
 )
 
 if pagina == "⚗️ Físico-químico":
-    if not ARCHIVO_FISICO_QUIMICO.exists():
+    if not (BASE_DATOS.exists() or ARCHIVO_FISICO_QUIMICO.exists()):
         st.header("⚗️ Físico-químico")
         st.info(
             "Aún no hay datos importados. Usa «Actualizar desde planillas» "
@@ -71,7 +87,7 @@ if pagina == "⚗️ Físico-químico":
         mostrar_fisico_quimico()
 else:
     nombre_area, titulo = SECCIONES[pagina]
-    if not ARCHIVO_ANALISIS_AEROBICO.exists():
+    if not (BASE_DATOS.exists() or ARCHIVO_ANALISIS_AEROBICO.exists()):
         st.header(titulo)
         st.info(
             "Aún no hay datos importados para esta sección. "
