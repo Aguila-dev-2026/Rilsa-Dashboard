@@ -41,7 +41,7 @@ def aplicar_identidad_volta():
           }
           [data-testid="stSidebar"] [data-testid="stToggle"] [role="switch"],
           [data-testid="stSidebar"] button[role="switch"] {
-            background: #8EA2B7 !important;
+            background: #4D637A !important;
             border: 2px solid #DCEAF5 !important;
             box-shadow: none !important;
           }
