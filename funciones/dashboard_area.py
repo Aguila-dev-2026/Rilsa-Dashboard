@@ -13,6 +13,84 @@ CONFIGURACION_GRAFICO = {
     "responsive": True,
 }
 
+VINO = "#6D1F2B"
+VINO_OSCURO = "#48121A"
+COBRE = "#B36F3D"
+TINTA = "#282422"
+LINEA_SUAVE = "rgba(117,110,103,0.16)"
+
+
+def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
+    etiqueta_valor = f"%{{y:,.2f}} {unidad}".strip()
+    fig.update_traces(
+        hovertemplate=(
+            "<b>%{x|%d/%m/%Y}</b><br>"
+            f"{parametro}: {etiqueta_valor}<extra></extra>"
+        )
+    )
+
+    if tipo_grafico == "Barras":
+        fig.update_traces(
+            marker=dict(
+                color=VINO,
+                line=dict(color=VINO_OSCURO, width=0.7),
+            ),
+            opacity=0.94,
+        )
+    else:
+        fig.update_traces(
+            line=dict(color=VINO, width=3),
+            marker=dict(
+                color=COBRE,
+                size=7,
+                line=dict(color="#FFFDF8", width=1.5),
+            ),
+            fill="tozeroy",
+            fillcolor="rgba(109,31,43,0.07)",
+        )
+
+    fig.update_layout(
+        title=dict(
+            text=f"<b>{parametro}</b><br><sup>Evolución del período seleccionado</sup>",
+            x=0.015,
+            xanchor="left",
+            font=dict(size=21, color=TINTA),
+        ),
+        font=dict(
+            family='"Source Sans Pro", sans-serif',
+            color=TINTA,
+        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        hoverlabel=dict(
+            bgcolor=VINO_OSCURO,
+            bordercolor=VINO_OSCURO,
+            font=dict(color="#FFFFFF", size=13),
+        ),
+        hovermode="x unified",
+        bargap=0.28,
+        barcornerradius=6,
+        margin=dict(l=18, r=18, t=78, b=92),
+    )
+    fig.update_xaxes(
+        title=None,
+        showgrid=False,
+        showline=True,
+        linecolor="rgba(117,110,103,0.28)",
+        linewidth=1,
+        tickfont=dict(size=12, color="#5F5852"),
+    )
+    fig.update_yaxes(
+        title=f"Valor ({unidad})" if unidad else "Valor",
+        showgrid=True,
+        gridcolor=LINEA_SUAVE,
+        gridwidth=1,
+        zeroline=False,
+        showline=False,
+        tickfont=dict(size=12, color="#5F5852"),
+        title_font=dict(size=12, color="#756E67"),
+    )
+
 
 def mostrar_grafico_desplazable(fig, cantidad_dias):
     """Replica el tema nativo y añade scroll únicamente desde el día 32."""
@@ -134,10 +212,10 @@ def mostrar_dashboard_area(nombre_area, titulo):
 
     if tipo_grafico == "Barras":
         fig = px.bar(datos_filtrados, **opciones)
-        fig.update_traces(marker_color="#6d1f2b")
     else:
         fig = px.line(datos_filtrados, markers=True, **opciones)
-        fig.update_traces(line_width=3, marker_size=7)
+
+    aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad)
 
     fecha_inicio = datos_filtrados["Fecha"].min().normalize()
     fecha_fin = datos_filtrados["Fecha"].max().normalize()
@@ -154,10 +232,6 @@ def mostrar_dashboard_area(nombre_area, titulo):
         for dia in dias
     ]
 
-    fig.update_layout(
-        hovermode="x unified",
-        margin=dict(l=10, r=10, t=55, b=90),
-    )
     fig.update_xaxes(
         range=[
             fecha_inicio - margen_lateral,
@@ -172,16 +246,17 @@ def mostrar_dashboard_area(nombre_area, titulo):
     )
     fig.update_yaxes(fixedrange=True)
 
-    st.caption("El gráfico muestra todos los días del período seleccionado.")
-    if len(dias) > 31:
-        mostrar_grafico_desplazable(fig, len(dias))
-    else:
-        st.plotly_chart(
-            fig,
-            width="stretch",
-            config=CONFIGURACION_GRAFICO,
-            theme="streamlit",
-        )
+    with st.container(border=True):
+        st.caption("VISTA TEMPORAL · TODOS LOS DÍAS DEL PERÍODO")
+        if len(dias) > 31:
+            mostrar_grafico_desplazable(fig, len(dias))
+        else:
+            st.plotly_chart(
+                fig,
+                width="stretch",
+                config=CONFIGURACION_GRAFICO,
+                theme="streamlit",
+            )
 
     st.subheader("Registros mostrados")
     st.dataframe(
