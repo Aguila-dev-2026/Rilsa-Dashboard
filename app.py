@@ -11,7 +11,7 @@ ENTRADA_ANALISIS_AEROBICO = CARPETA_DATOS / "Análisis Planta Aeróbica.xlsx"
 
 SECCIONES = {
     "⚗️ Físico-químico": ("Físico-químico", "⚗️ Físico-químico"),
-    "🏭 Planta Alta": ("Planta Alta", "🏭 Planta Alta · Afluente"),
+    "🚛 Planta Alta": ("Planta Alta", "🚛 Planta Alta · Afluente"),
     "🦠 Planta Aeróbica": ("Planta Aeróbica", "🦠 Planta Aeróbica"),
     "💧 Efluente": ("Efluente", "💧 Efluente"),
 }
