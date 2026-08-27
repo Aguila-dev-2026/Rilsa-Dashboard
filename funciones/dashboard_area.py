@@ -14,24 +14,36 @@ CONFIGURACION_GRAFICO = {
 }
 
 
-def mostrar_grafico_adaptativo(fig, cantidad_dias):
-    """Usa el mismo visor y activa scroll únicamente desde el día 32."""
-    requiere_scroll = cantidad_dias > 31
-    ancho_grafico = cantidad_dias * 48 if requiere_scroll else None
+def mostrar_grafico_desplazable(fig, cantidad_dias):
+    """Replica el tema nativo y añade scroll únicamente desde el día 32."""
+    ancho_grafico = cantidad_dias * 48
+
+    try:
+        fig.update_layout(template="streamlit")
+    except ValueError:
+        pass
 
     fig.update_layout(
         width=ancho_grafico,
         height=480,
-        autosize=not requiere_scroll,
+        autosize=False,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(
+            family='"Source Sans Pro", sans-serif',
+            color="#31333F",
+        ),
     )
+    fig.update_xaxes(gridcolor="rgba(49,51,63,0.12)")
+    fig.update_yaxes(gridcolor="rgba(49,51,63,0.12)")
 
     grafico_html = fig.to_html(
         full_html=False,
         include_plotlyjs="cdn",
         config=CONFIGURACION_GRAFICO,
     )
-    ancho_contenido = f"{ancho_grafico}px" if requiere_scroll else "100%"
-    desbordamiento = "auto" if requiere_scroll else "hidden"
+    ancho_contenido = f"{ancho_grafico}px"
+    desbordamiento = "auto"
 
     html = f"""
     <!doctype html>
@@ -161,7 +173,15 @@ def mostrar_dashboard_area(nombre_area, titulo):
     fig.update_yaxes(fixedrange=True)
 
     st.caption("El gráfico muestra todos los días del período seleccionado.")
-    mostrar_grafico_adaptativo(fig, len(dias))
+    if len(dias) > 31:
+        mostrar_grafico_desplazable(fig, len(dias))
+    else:
+        st.plotly_chart(
+            fig,
+            width="stretch",
+            config=CONFIGURACION_GRAFICO,
+            theme="streamlit",
+        )
 
     st.subheader("Registros mostrados")
     st.dataframe(
