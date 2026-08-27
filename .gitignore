@@ -8,6 +8,8 @@ __pycache__/
 # Configuración local
 .vscode/
 .streamlit/
+!.streamlit/
+!.streamlit/config.toml
 .env
 .env.*
 !.env.example
