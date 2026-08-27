@@ -29,6 +29,8 @@ class BandasTests(unittest.TestCase):
             "Cloruro",
         ):
             self.assertIn(parametro, ruta.read_text(encoding="utf-8"))
+        self.assertIn("tipo_grafico_recomendado", funciones)
+        self.assertIn("Líneas", funciones["tipo_grafico_recomendado"])
 
 
 if __name__ == "__main__":
