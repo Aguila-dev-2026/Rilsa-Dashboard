@@ -8,6 +8,7 @@ Ejecuta desde la raíz del repositorio:
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -15,9 +16,11 @@ from pathlib import Path
 RAIZ_PROYECTO = Path(__file__).resolve().parent
 
 
-def ejecutar(comando: list[str]) -> None:
+def ejecutar(comando: list[str], variables: dict[str, str] | None = None) -> None:
     """Ejecuta un comando con el mismo intérprete del entorno virtual activo."""
-    subprocess.run(comando, cwd=RAIZ_PROYECTO, check=True)
+    entorno = os.environ.copy()
+    entorno.update(variables or {})
+    subprocess.run(comando, cwd=RAIZ_PROYECTO, env=entorno, check=True)
 
 
 def tarea_dev() -> None:
@@ -30,7 +33,23 @@ def tarea_dev() -> None:
             "app.py",
             "--server.runOnSave",
             "true",
-        ]
+        ],
+        {"RILSA_APP_ENV": "local"},
+    )
+
+
+def tarea_dev_nube() -> None:
+    ejecutar(
+        [
+            sys.executable,
+            "-m",
+            "streamlit",
+            "run",
+            "app.py",
+            "--server.runOnSave",
+            "true",
+        ],
+        {"RILSA_APP_ENV": "cloud"},
     )
 
 
@@ -59,12 +78,49 @@ def tarea_instalar() -> None:
     ejecutar([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
 
 
+def tarea_sincronizar_nube() -> None:
+    ejecutar(
+        [sys.executable, "sincronizar_nube.py"],
+        {"RILSA_APP_ENV": "cloud"},
+    )
+
+
+def tarea_validar_configuracion() -> None:
+    from funciones.configuracion import obtener_configuracion
+
+    configuracion = obtener_configuracion()
+    print(f"Entorno activo: {configuracion.entorno}")
+    if not configuracion.es_nube:
+        print("Configuración local lista: SQLite y planillas de datos/.")
+        return
+
+    faltantes = (
+        configuracion.faltantes_base_datos()
+        + configuracion.faltantes_sharepoint()
+    )
+    if faltantes:
+        print("Configuración de nube incompleta:")
+        for nombre in faltantes:
+            print(f"- {nombre}")
+        raise SystemExit(1)
+    print("Configuración de nube completa.")
+
+
+def tarea_comprobar() -> None:
+    ejecutar([sys.executable, "-m", "compileall", "-q", "."])
+    ejecutar([sys.executable, "-m", "unittest", "discover", "-s", "tests"])
+
+
 TAREAS = {
     "dev": tarea_dev,
+    "dev-nube": tarea_dev_nube,
     "actualizar": tarea_actualizar,
     "importar-fisico": tarea_importar_fisico,
     "importar-aerobico": tarea_importar_aerobico,
     "instalar": tarea_instalar,
+    "sincronizar-nube": tarea_sincronizar_nube,
+    "validar-config": tarea_validar_configuracion,
+    "comprobar": tarea_comprobar,
 }
 
 
