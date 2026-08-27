@@ -62,7 +62,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
 
     fig.update_layout(
         title=dict(
-            text=f"<b>{parametro}</b><br><sup>Evolución del período seleccionado</sup>",
+            text=f"<b>{parametro}</b>",
             x=0.015,
             xanchor="left",
             font=dict(size=21),
@@ -290,7 +290,6 @@ def mostrar_dashboard_area(nombre_area, titulo):
     fig.update_yaxes(fixedrange=True)
 
     with st.container(border=True):
-        st.caption("VISTA TEMPORAL · TODOS LOS DÍAS DEL PERÍODO")
         if len(dias) > 31:
             mostrar_grafico_desplazable(fig, len(dias))
         else:
