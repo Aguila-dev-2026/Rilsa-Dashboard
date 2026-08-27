@@ -173,7 +173,8 @@ def resaltar_valores_fuera_de_rango(
                 size=8,
                 line=dict(color="#FFFFFF", width=1.4),
             ),
-            hovertemplate="Valor fuera de rango: %{y:,.2f}<extra></extra>",
+            hovertemplate="<b>%{x|%d/%m/%Y}</b><br>"
+            "Valor fuera de rango: %{y:,.2f}<extra></extra>",
         )
         primer_tramo = False
 
@@ -257,7 +258,10 @@ def agregar_tendencia(fig, datos, parametro, unidad):
         mode="lines",
         name=f"Tendencia · {metodo}",
         line=dict(color=COBRE, width=3.2, dash="dot"),
-        hovertemplate=f"Tendencia: %{{y:,.2f}}{sufijo_unidad}<extra></extra>",
+        hovertemplate=(
+            "<b>%{x|%d/%m/%Y}</b><br>"
+            f"Tendencia: %{{y:,.2f}}{sufijo_unidad}<extra></extra>"
+        ),
     )
     fig.update_layout(
         legend=dict(
@@ -436,7 +440,10 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
 
     etiqueta_valor = f"%{{y:,.2f}} {unidad}".strip()
     fig.update_traces(
-        hovertemplate=f"{parametro}: {etiqueta_valor}<extra></extra>"
+        hovertemplate=(
+            "<b>%{x|%d/%m/%Y}</b><br>"
+            f"{parametro}: {etiqueta_valor}<extra></extra>"
+        )
     )
 
     if tipo_grafico == "Barras":
@@ -486,6 +493,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     )
     fig.update_xaxes(
         title=None,
+        unifiedhovertitle_text="",
         showgrid=False,
         showline=True,
         linewidth=1,
