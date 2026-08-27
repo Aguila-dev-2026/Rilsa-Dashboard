@@ -1,4 +1,5 @@
 from pathlib import Path
+import sqlite3
 
 import pandas as pd
 import streamlit as st
@@ -6,6 +7,7 @@ import streamlit as st
 
 RAIZ_PROYECTO = Path(__file__).resolve().parents[1]
 CARPETA_GENERADOS = RAIZ_PROYECTO / "datos_generados"
+BASE_DATOS = CARPETA_GENERADOS / "riles.db"
 
 ARCHIVOS_OPERACIONALES = (
     "fisico_quimico.xlsx",
@@ -28,6 +30,35 @@ def _leer_excel_cacheado(ruta, mtime_ns, tamano):
 def _leer_excel(ruta):
     estado = ruta.stat()
     return _leer_excel_cacheado(str(ruta), estado.st_mtime_ns, estado.st_size)
+
+
+@st.cache_data(show_spinner=False, max_entries=16)
+def _consultar_sqlite_cacheado(ruta, mtime_ns, tamano, nombre_area):
+    """Consulta una versión física concreta de SQLite y solo el área solicitada."""
+    del mtime_ns, tamano
+    consulta = "SELECT * FROM mediciones"
+    parametros = ()
+    if nombre_area:
+        consulta += " WHERE Area = ?"
+        parametros = (nombre_area,)
+
+    with sqlite3.connect(ruta) as conexion:
+        return pd.read_sql_query(
+            consulta,
+            conexion,
+            params=parametros,
+            parse_dates=["Fecha"],
+        )
+
+
+def _consultar_sqlite(nombre_area=None):
+    estado = BASE_DATOS.stat()
+    return _consultar_sqlite_cacheado(
+        str(BASE_DATOS),
+        estado.st_mtime_ns,
+        estado.st_size,
+        nombre_area,
+    )
 
 
 def _detener_por_archivo(ruta):
@@ -66,7 +97,19 @@ def _cargar_archivo_largo(nombre):
     return _normalizar_datos_largos(datos)
 
 
-def cargar_datos_operacionales():
+def cargar_datos_operacionales(nombre_area=None):
+    if BASE_DATOS.exists():
+        try:
+            datos = _consultar_sqlite(nombre_area)
+            _validar_columnas(datos, COLUMNAS_LARGAS, BASE_DATOS)
+            return _normalizar_datos_largos(datos)
+        except (sqlite3.DatabaseError, OSError, ValueError) as error:
+            st.warning(
+                "No fue posible consultar SQLite. "
+                "Se utilizarán temporalmente los Excel generados. "
+                f"Detalle: {error}"
+            )
+
     dataframes = []
 
     for nombre in ARCHIVOS_OPERACIONALES:
@@ -98,9 +141,10 @@ def cargar_datos_operacionales():
         .drop_duplicates(subset=claves, keep="last")
         .drop(columns="_PrioridadFuente")
     )
+    if nombre_area:
+        combinados = combinados[combinados["Area"] == nombre_area]
 
     return _normalizar_datos_largos(combinados)
-
 
 def cargar_datos_laboratorio():
     return _cargar_archivo_largo("laboratorio.xlsx")
