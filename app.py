@@ -64,6 +64,11 @@ def aplicar_identidad_volta():
             color: #FFFFFF;
           }
           [data-testid="stDataFrame"] { border: 1px solid #DCE5EF; }
+          .js-plotly-plot .hoverlayer .bg {
+            stroke-width: 2px !important;
+            rx: 7px;
+            ry: 7px;
+          }
         </style>
         """
     )
