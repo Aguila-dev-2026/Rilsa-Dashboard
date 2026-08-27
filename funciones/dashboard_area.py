@@ -444,6 +444,9 @@ def mostrar_dashboard_area(nombre_area, titulo):
         return
 
     datos_filtrados = datos_filtrados.sort_values("Fecha")
+    # El Print nativo lee esta selección durante el mismo rerun de Streamlit.
+    # Así el informe respeta área, punto, parámetro y fechas visibles.
+    st.session_state["datos_para_impresion"] = datos_filtrados.copy()
 
     tipo_recomendado = TIPO_GRAFICO_RECOMENDADO.get(parametro, "Barras")
     clave_tipo = f"tipo_grafico_{clave_contexto}"
