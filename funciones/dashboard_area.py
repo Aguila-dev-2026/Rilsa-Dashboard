@@ -169,7 +169,11 @@ def agregar_tendencia(fig, datos, parametro, unidad):
 
 def agregar_bandas(fig, parametro, limites_internos=None):
     """Añade bandas normativas e internas sin depender de la tendencia."""
-    if parametro == "pH":
+    mostrar_normativa = (
+        limites_internos is None
+        or limites_internos.get("normativa", True)
+    )
+    if parametro == "pH" and mostrar_normativa:
         fig.add_hrect(
             y0=5.5,
             y1=9.0,
@@ -229,7 +233,7 @@ def agregar_bandas(fig, parametro, limites_internos=None):
         )
 
 
-def configurar_bandas(datos, clave):
+def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
     """Recoge bandas independientes y las conserva durante la sesión."""
     valores = datos["Valor"].dropna().astype(float)
     if valores.empty:
@@ -242,7 +246,14 @@ def configurar_bandas(datos, clave):
     superior_inicial = max(maximo_observado, minimo_observado + paso)
 
     with st.sidebar.expander("Bandas", expanded=False):
-        st.caption("Líneas rojas configurables para control operacional interno.")
+        st.caption("Referencias normativas e internas para control operacional.")
+        mostrar_normativa = True
+        if tiene_bandas_normativas:
+            mostrar_normativa = st.toggle(
+                "Mostrar bandas normativas",
+                value=True,
+                key=f"mostrar_bandas_normativas_{clave}",
+            )
         mostrar_inferior = st.toggle(
             "Añadir banda inferior",
             value=False,
@@ -273,7 +284,11 @@ def configurar_bandas(datos, clave):
                 key=f"limite_interno_superior_{clave}",
             )
 
-        if limite_inferior is None and limite_superior is None:
+        if (
+            limite_inferior is None
+            and limite_superior is None
+            and not tiene_bandas_normativas
+        ):
             return None
         if (
             limite_inferior is not None
@@ -283,6 +298,7 @@ def configurar_bandas(datos, clave):
             st.warning("El límite inferior debe ser menor que el superior.")
             return None
         return {
+            "normativa": mostrar_normativa,
             "inferior": float(limite_inferior)
             if limite_inferior is not None
             else None,
@@ -563,6 +579,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
     limites_internos = configurar_bandas(
         datos_filtrados,
         clave=clave_banda,
+        tiene_bandas_normativas=parametro == "pH",
     )
 
     col1, col2, col3 = st.columns(3)
