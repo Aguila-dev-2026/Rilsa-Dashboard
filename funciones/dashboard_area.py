@@ -511,7 +511,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
 
 def mostrar_grafico_desplazable(fig, cantidad_periodos):
     """Mantiene el gráfico claro y añade scroll desde el período visible 32."""
-    ancho_grafico = cantidad_periodos * 48
+    ancho_grafico = cantidad_periodos * 24
     texto = "#171514"
     texto_eje = "#332E2A"
     cuadricula = "rgba(23,21,20,0.24)"
