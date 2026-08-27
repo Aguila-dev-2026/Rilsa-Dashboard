@@ -50,19 +50,18 @@ def normalizar_nombre(valor: object) -> str:
 
 
 def convertir_a_numero(serie: pd.Series) -> pd.Series:
-    """Respeta números ya leídos por Excel y admite texto con coma decimal."""
-    numericos = pd.to_numeric(serie, errors="coerce")
-    faltantes = numericos.isna()
+    """Convierte números Excel y texto con coma decimal sin alterar los decimales."""
+    texto = serie.astype("string").str.strip().str.replace("\u00a0", "", regex=False)
+    tiene_coma = texto.str.contains(",", regex=False, na=False)
 
-    if not faltantes.any():
-        return numericos
-
-    texto = serie.loc[faltantes].astype("string").str.strip()
-    texto = texto.str.replace("\u00a0", "", regex=False)
-    texto = texto.str.replace(r"(?<=\d)\.(?=\d{3}(?:\D|$))", "", regex=True)
-    texto = texto.str.replace(",", ".", regex=False)
-    numericos.loc[faltantes] = pd.to_numeric(texto, errors="coerce")
-    return numericos
+    # Un separador de miles con punto solo se elimina cuando también hay coma
+    # decimal (por ejemplo, 1.234,56).
+    texto.loc[tiene_coma] = (
+        texto.loc[tiene_coma]
+        .str.replace(".", "", regex=False)
+        .str.replace(",", ".", regex=False)
+    )
+    return pd.to_numeric(texto, errors="coerce")
 
 
 def unidad_de(parametro: str) -> str:
