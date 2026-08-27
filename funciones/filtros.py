@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import streamlit as st
 
 
@@ -77,21 +79,25 @@ ORDEN_PUNTOS = [
 def filtrar_por_fecha(datos, columna_fecha="Fecha", clave="general"):
     fecha_min = datos[columna_fecha].min().date()
     fecha_max = datos[columna_fecha].max().date()
+    fecha_inicio_predeterminada = max(
+        fecha_min,
+        fecha_max - timedelta(days=29),
+    )
 
     st.sidebar.subheader("Período de consulta")
     fecha_inicio = st.sidebar.date_input(
         "Fecha inicial",
-        value=fecha_min,
+        value=fecha_inicio_predeterminada,
         min_value=fecha_min,
         max_value=fecha_max,
-        key=f"fecha_inicio_{clave}",
+        key=f"fecha_inicio_30_dias_{clave}",
     )
     fecha_fin = st.sidebar.date_input(
         "Fecha final",
         value=fecha_max,
         min_value=fecha_min,
         max_value=fecha_max,
-        key=f"fecha_fin_{clave}",
+        key=f"fecha_fin_30_dias_{clave}",
     )
 
     if fecha_inicio > fecha_fin:
