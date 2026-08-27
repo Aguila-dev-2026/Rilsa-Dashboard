@@ -166,6 +166,11 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     vino = "#A94353"
     vino_oscuro = "#6D1F2B"
     cobre = "#D99A68"
+    cuadricula = (
+        "rgba(250,250,250,0.12)"
+        if tema_nativo_oscuro()
+        else "rgba(23,21,20,0.24)"
+    )
 
     etiqueta_valor = f"%{{y:,.2f}} {unidad}".strip()
     fig.update_traces(
@@ -226,6 +231,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         title=f"Valor ({unidad})" if unidad else "Valor",
         showgrid=True,
         gridwidth=1,
+        gridcolor=cuadricula,
         zeroline=False,
         showline=False,
         tickfont=dict(size=12),
@@ -240,7 +246,7 @@ def mostrar_grafico_desplazable(fig, cantidad_dias):
     oscuro = tema_nativo_oscuro()
     texto = "#FAFAFA" if oscuro else "#171514"
     texto_eje = "#C8CBD4" if oscuro else "#332E2A"
-    cuadricula = "rgba(250,250,250,0.12)" if oscuro else "rgba(23,21,20,0.14)"
+    cuadricula = "rgba(250,250,250,0.12)" if oscuro else "rgba(23,21,20,0.24)"
 
     fig.update_layout(
         template="plotly_dark" if oscuro else "plotly_white",
