@@ -9,7 +9,6 @@ def mostrar_dashboard_area(nombre_area, titulo):
     st.header(titulo)
 
     datos = cargar_datos_operacionales()
-
     datos = datos[datos["Area"] == nombre_area].copy()
 
     if datos.empty:
@@ -17,37 +16,42 @@ def mostrar_dashboard_area(nombre_area, titulo):
         return
 
     datos = filtrar_por_fecha(datos)
-    datos_filtrados = filtrar_por_parametro(datos)
-
-    if datos_filtrados.empty:
+    if datos.empty:
+        st.info("No hay datos para el rango de fechas seleccionado.")
         return
 
+    datos_filtrados = filtrar_por_parametro(datos)
+    if datos_filtrados.empty:
+        st.info("No hay datos para el parámetro seleccionado.")
+        return
+
+    parametro = datos_filtrados["Parametro"].iat[0]
+    unidad = datos_filtrados["Unidad"].dropna().iloc[0] if datos_filtrados["Unidad"].notna().any() else ""
+
     col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric("Registros", len(datos_filtrados))
-
-    with col2:
-        st.metric("Parámetros", datos_filtrados["Parametro"].nunique())
-
-    with col3:
-        st.metric("Promedio general", round(datos_filtrados["Valor"].mean(), 2))
+    col1.metric("Registros", len(datos_filtrados))
+    col2.metric("Promedio", f"{datos_filtrados['Valor'].mean():.2f} {unidad}".strip())
+    col3.metric("Último valor", f"{datos_filtrados['Valor'].iloc[-1]:.2f} {unidad}".strip())
 
     fig = px.line(
         datos_filtrados,
         x="Fecha",
         y="Valor",
-        color="Parametro",
         markers=True,
         template="plotly_white",
+        title=f"{parametro} — evolución en el período seleccionado",
         labels={
             "Fecha": "Fecha",
-            "Valor": "Valor",
-            "Parametro": "Parámetro"
+            "Valor": f"Valor ({unidad})" if unidad else "Valor"
         }
     )
+    fig.update_traces(line_width=3, marker_size=7)
+    fig.update_layout(hovermode="x unified", margin=dict(l=10, r=10, t=55, b=10))
 
     st.plotly_chart(fig, width="stretch")
-
-    st.subheader("Datos filtrados")
-    st.dataframe(datos_filtrados, width="stretch")
+    st.subheader("Registros mostrados")
+    st.dataframe(
+        datos_filtrados.sort_values("Fecha", ascending=False),
+        width="stretch",
+        hide_index=True
+    )
