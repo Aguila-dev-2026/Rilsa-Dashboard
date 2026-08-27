@@ -73,9 +73,6 @@ ORDEN_PUNTOS = [
     "Efluente",
 ]
 
-ORDEN_TIPOS_DATO = ["Medición", "Cálculo", "Estimación", "Registro"]
-ORDEN_TURNOS = ["Mañana", "Tarde", "Noche", "Sin turno"]
-
 
 def filtrar_por_fecha(datos, columna_fecha="Fecha", clave="general"):
     fecha_min = datos[columna_fecha].min().date()
@@ -149,30 +146,13 @@ def filtrar_dimension(
 
 
 def filtrar_contexto_operacional(datos, clave):
-    datos = filtrar_dimension(
+    return filtrar_dimension(
         datos,
         columna="Punto",
         etiqueta="Punto de proceso",
         clave=clave,
         orden_preferido=ORDEN_PUNTOS,
     )
-    datos = filtrar_dimension(
-        datos,
-        columna="Turno",
-        etiqueta="Turno o frecuencia",
-        clave=clave,
-        orden_preferido=ORDEN_TURNOS,
-        nombre_vacio="Sin turno",
-        opcion_todos="Todos los turnos y frecuencias",
-    )
-    datos = filtrar_dimension(
-        datos,
-        columna="TipoDato",
-        etiqueta="Tipo de dato",
-        clave=clave,
-        orden_preferido=ORDEN_TIPOS_DATO,
-    )
-    return datos
 
 
 def filtrar_por_parametro(datos, columna_parametro="Parametro", clave="general"):
