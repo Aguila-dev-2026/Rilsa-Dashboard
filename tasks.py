@@ -21,7 +21,17 @@ def ejecutar(comando: list[str]) -> None:
 
 
 def tarea_dev() -> None:
-    ejecutar([\n        sys.executable,\n        "-m",\n        "streamlit",\n        "run",\n        "app.py",\n        "--server.runOnSave",\n        "true",\n    ])
+    ejecutar(
+        [
+            sys.executable,
+            "-m",
+            "streamlit",
+            "run",
+            "app.py",
+            "--server.runOnSave",
+            "true",
+        ]
+    )
 
 
 def tarea_actualizar() -> None:
