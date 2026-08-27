@@ -175,6 +175,11 @@ if pagina == "⚗️ Físico-químico":
         mostrar_fisico_quimico()
 else:
     nombre_area, titulo = SECCIONES[pagina]
+    if nombre_area == "Planta Alta":
+        st.image(
+            RAIZ_PROYECTO / "assets" / "sedimentador-planta-alta.svg",
+            width=118,
+        )
     if not datos_disponibles:
         st.header(titulo)
         st.info(
