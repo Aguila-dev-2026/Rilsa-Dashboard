@@ -45,7 +45,7 @@ TIPO_TENDENCIA_RECOMENDADA = {
     "Energía eléctrica consumida": "EWMA adaptativa",
     "% Humedad Lodo 1": "Theil–Sen",
     "% Humedad Lodo 2": "Theil–Sen",
-    "Volumen TK3 [m3]": "Theil–Sen",
+    "Volumen TK3 [m3]": "EWMA adaptativa",
     "DQO TK3 [mg/l]": "Theil–Sen",
     "Conductividad [mS]": "Theil–Sen",
     "Turbiedad [NTU]": "Theil–Sen",
