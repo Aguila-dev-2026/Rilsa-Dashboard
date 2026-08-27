@@ -24,7 +24,7 @@ CONFIGURACION_GRAFICO = {
 
 VINO = "#6D1F2B"
 COBRE = "#B36F3D"
-AZUL_CORPORATIVO = "#2F6F9F"
+AZUL_CORPORATIVO = "#147EAF"
 TINTA = "#282422"
 LINEA_SUAVE = "rgba(117,110,103,0.16)"
 
@@ -338,7 +338,7 @@ def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
 
 
 def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
-    azul_borde = "#244F70"
+    azul_borde = "#0C638D"
     cobre = "#D99A68"
     texto = "#171514"
     texto_eje = "#332E2A"
@@ -364,12 +364,12 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         fig.update_traces(
             line=dict(color=AZUL_CORPORATIVO, width=3.2),
             marker=dict(
-                color="#6FA4C8",
+                color="#67C5E8",
                 size=7,
                 line=dict(color="#FFFDF8", width=1.4),
             ),
             fill="tozeroy",
-            fillcolor="rgba(47,111,159,0.10)",
+            fillcolor="rgba(20,126,175,0.10)",
         )
 
     fig.update_layout(
