@@ -32,6 +32,10 @@ def tema_oscuro() -> bool:
 
 
 def aplicar_tema(modo: str) -> None:
+    # Dark conserva el aspecto nativo original de Streamlit.
+    if modo == "dark":
+        return
+
     tema = TEMAS[modo]
     st.markdown(
         f"""
