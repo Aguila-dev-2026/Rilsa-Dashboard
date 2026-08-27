@@ -1,10 +1,8 @@
-import base64
 from pathlib import Path
 
 import streamlit as st
 
 from funciones.configuracion import obtener_configuracion
-from funciones.iconos import BACTERIA_PLANTA_AEROBICA, SEDIMENTADOR_PLANTA_ALTA
 
 RAIZ_PROYECTO = Path(__file__).resolve().parent
 CARPETA_DATOS = RAIZ_PROYECTO / "datos"
@@ -13,8 +11,8 @@ ENTRADA_ANALISIS_AEROBICO = CARPETA_DATOS / "Análisis Planta Aeróbica.xlsx"
 
 SECCIONES = {
     "⚗️ Físico-químico": ("Físico-químico", "⚗️ Físico-químico"),
-    "Planta Alta": ("Planta Alta", "Planta Alta · Afluente"),
-    "Planta Aeróbica": ("Planta Aeróbica", "Planta Aeróbica"),
+    "🏭 Planta Alta": ("Planta Alta", "🏭 Planta Alta · Afluente"),
+    "🦠 Planta Aeróbica": ("Planta Aeróbica", "🦠 Planta Aeróbica"),
     "💧 Efluente": ("Efluente", "💧 Efluente"),
 }
 
@@ -83,24 +81,10 @@ if CONFIGURACION.es_nube and CONFIGURACION.faltantes_base_datos():
 st.title("📊 Dashboard Operacional Planta RILES")
 
 st.sidebar.title("Menú Planta RILES")
-if "pagina_activa" not in st.session_state:
-    st.session_state["pagina_activa"] = "⚗️ Físico-químico"
-
-col_menu_izq, col_menu_der = st.sidebar.columns(2)
-with col_menu_izq:
-    if st.button("⚗️\nFísico-químico", key="nav_fisico", use_container_width=True):
-        st.session_state["pagina_activa"] = "⚗️ Físico-químico"
-    st.image(base64.b64decode(SEDIMENTADOR_PLANTA_ALTA), width=68)
-    if st.button("Planta Alta", key="nav_alta", use_container_width=True):
-        st.session_state["pagina_activa"] = "Planta Alta"
-with col_menu_der:
-    if st.button("💧\nEfluente", key="nav_efluente", use_container_width=True):
-        st.session_state["pagina_activa"] = "💧 Efluente"
-    st.image(base64.b64decode(BACTERIA_PLANTA_AEROBICA), width=68)
-    if st.button("Planta Aeróbica", key="nav_aerobica", use_container_width=True):
-        st.session_state["pagina_activa"] = "Planta Aeróbica"
-
-pagina = st.session_state["pagina_activa"]
+pagina = st.sidebar.radio(
+    "Selecciona una sección",
+    list(SECCIONES),
+)
 
 st.sidebar.divider()
 st.sidebar.subheader("Datos operacionales")
@@ -191,13 +175,6 @@ if pagina == "⚗️ Físico-químico":
         mostrar_fisico_quimico()
 else:
     nombre_area, titulo = SECCIONES[pagina]
-    iconos_area = {
-        "Planta Alta": SEDIMENTADOR_PLANTA_ALTA,
-        "Planta Aeróbica": BACTERIA_PLANTA_AEROBICA,
-    }
-    if nombre_area in iconos_area:
-        icono = base64.b64decode(iconos_area[nombre_area])
-        st.image(icono, width=118)
     if not datos_disponibles:
         st.header(titulo)
         st.info(
