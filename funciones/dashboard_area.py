@@ -447,6 +447,22 @@ def mostrar_dashboard_area(nombre_area, titulo):
         f"{datos_filtrados['Valor'].iloc[-1]:.2f} {unidad}".strip(),
     )
 
+    fecha_inicio = datos_filtrados["Fecha"].min().normalize()
+    fecha_fin = datos_filtrados["Fecha"].max().normalize()
+    dias = pd.date_range(fecha_inicio, fecha_fin, freq="D")
+
+    # La importación conserva solo mediciones válidas. Para el gráfico se
+    # reconstruyen todos los días del período y los faltantes se muestran en 0.
+    datos_grafico = (
+        pd.DataFrame({"Fecha": dias})
+        .merge(
+            datos_filtrados[["Fecha", "Valor"]],
+            on="Fecha",
+            how="left",
+        )
+    )
+    datos_grafico["Valor"] = datos_grafico["Valor"].fillna(0)
+
     opciones = {
         "x": "Fecha",
         "y": "Valor",
@@ -458,18 +474,9 @@ def mostrar_dashboard_area(nombre_area, titulo):
     }
 
     if tipo_grafico == "Barras":
-        fig = px.bar(datos_filtrados, **opciones)
+        fig = px.bar(datos_grafico, **opciones)
     else:
-        datos_linea = datos_filtrados[
-            datos_filtrados["Valor"].notna()
-            & datos_filtrados["Valor"].ne(0)
-        ].copy()
-
-        if datos_linea.empty:
-            st.info("No hay valores distintos de cero para mostrar en el gráfico lineal.")
-            return
-
-        fig = px.line(datos_linea, markers=True, **opciones)
+        fig = px.line(datos_grafico, markers=True, **opciones)
 
     aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad)
 
@@ -483,9 +490,6 @@ def mostrar_dashboard_area(nombre_area, titulo):
         )
         st.sidebar.caption(f"Tendencia automática: {metodo_tendencia}.")
 
-    fecha_inicio = datos_filtrados["Fecha"].min().normalize()
-    fecha_fin = datos_filtrados["Fecha"].max().normalize()
-    dias = pd.date_range(fecha_inicio, fecha_fin, freq="D")
     margen_lateral = pd.Timedelta(hours=12)
     dias_semana = ("L", "M", "M", "J", "V", "S", "D")
     azul_fin_semana = "#4F92BD"
