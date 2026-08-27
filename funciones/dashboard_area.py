@@ -373,7 +373,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
         return
 
     partes_clave = [clave_area]
-    for columna in ("Punto", "Turno", "TipoDato"):
+    for columna in ("Punto",):
         if columna in datos.columns:
             valores = datos[columna].fillna("").astype(str).unique()
             if len(valores) == 1:
