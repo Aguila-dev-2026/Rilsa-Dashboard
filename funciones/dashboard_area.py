@@ -632,7 +632,10 @@ def mostrar_dashboard_area(nombre_area, titulo):
                 theme="streamlit",
             )
 
-    st.subheader("Registros mostrados")
+    st.markdown(
+        "<h3 class='riles-tabla-titulo'>Registros mostrados</h3>",
+        unsafe_allow_html=True,
+    )
     with st.container(border=True):
         st.caption("DETALLE DE MEDICIONES · ORDEN CRONOLÓGICO DESCENDENTE")
         st.dataframe(
