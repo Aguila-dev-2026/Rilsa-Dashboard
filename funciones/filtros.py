@@ -117,6 +117,7 @@ def filtrar_dimension(
     clave,
     orden_preferido,
     nombre_vacio=None,
+    opcion_todos=None,
 ):
     if columna not in datos.columns:
         return datos
@@ -131,12 +132,16 @@ def filtrar_dimension(
 
     opciones = [valor for valor in orden_preferido if valor in disponibles]
     opciones.extend(sorted(disponibles.difference(opciones)))
+    if opcion_todos:
+        opciones.insert(0, opcion_todos)
 
     seleccionado = st.sidebar.selectbox(
         etiqueta,
         opciones,
         key=f"selector_{columna.lower()}_{clave}",
     )
+    if opcion_todos and seleccionado == opcion_todos:
+        return datos
     if nombre_vacio and seleccionado == nombre_vacio:
         return datos[serie.eq("")].copy()
 
@@ -158,6 +163,7 @@ def filtrar_contexto_operacional(datos, clave):
         clave=clave,
         orden_preferido=ORDEN_TURNOS,
         nombre_vacio="Sin turno",
+        opcion_todos="Todos los turnos y frecuencias",
     )
     datos = filtrar_dimension(
         datos,
