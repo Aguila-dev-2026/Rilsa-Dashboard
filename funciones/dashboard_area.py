@@ -5,7 +5,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from funciones.cargar_datos import cargar_datos_operacionales
-from funciones.filtros import filtrar_por_fecha, filtrar_por_parametro
+from funciones.filtros import (
+    filtrar_contexto_operacional,
+    filtrar_por_fecha,
+    filtrar_por_parametro,
+)
 
 
 CONFIGURACION_GRAFICO = {
@@ -33,7 +37,9 @@ TIPO_GRAFICO_RECOMENDADO = {
     "DQO TK3 [mg/l]": "Barras",
     "pH": "Líneas",
     "Conductividad [mS]": "Líneas",
+    "Conductividad": "Líneas",
     "Turbiedad [NTU]": "Líneas",
+    "Turbidez": "Líneas",
 }
 
 TIPO_TENDENCIA_RECOMENDADA = {
@@ -53,7 +59,14 @@ TIPO_TENDENCIA_RECOMENDADA = {
 }
 
 
-def calcular_tendencia(datos, parametro):
+def metodo_tendencia_recomendado(parametro, unidad):
+    unidades_ewma = {"kg", "kg/día", "ton", "m3", "m3/día", "m³", "m³/día"}
+    if parametro in TIPO_TENDENCIA_RECOMENDADA:
+        return TIPO_TENDENCIA_RECOMENDADA[parametro]
+    return "EWMA adaptativa" if unidad in unidades_ewma else "Theil–Sen"
+
+
+def calcular_tendencia(datos, parametro, unidad=""):
     """Calcula la tendencia recomendada usando solo valores válidos del filtro."""
     validos = (
         datos.loc[
@@ -64,9 +77,9 @@ def calcular_tendencia(datos, parametro):
         .copy()
     )
     if len(validos) < 2:
-        return None, TIPO_TENDENCIA_RECOMENDADA.get(parametro, "Theil–Sen")
+        return None, metodo_tendencia_recomendado(parametro, unidad)
 
-    metodo = TIPO_TENDENCIA_RECOMENDADA.get(parametro, "Theil–Sen")
+    metodo = metodo_tendencia_recomendado(parametro, unidad)
 
     if metodo == "EWMA adaptativa":
         cantidad = len(validos)
@@ -107,7 +120,7 @@ def calcular_tendencia(datos, parametro):
 
 
 def agregar_tendencia(fig, datos, parametro, unidad):
-    tendencia, metodo = calcular_tendencia(datos, parametro)
+    tendencia, metodo = calcular_tendencia(datos, parametro, unidad)
     if tendencia is None:
         return metodo
 
@@ -348,12 +361,31 @@ def mostrar_dashboard_area(nombre_area, titulo):
         st.warning(f"No hay datos disponibles para {nombre_area}.")
         return
 
-    datos = filtrar_por_fecha(datos)
+    clave_area = (
+        nombre_area.casefold()
+        .replace(" ", "_")
+        .replace("í", "i")
+        .replace("ó", "o")
+    )
+    datos = filtrar_contexto_operacional(datos, clave_area)
+    if datos.empty:
+        st.info("No hay datos para la selección de proceso indicada.")
+        return
+
+    partes_clave = [clave_area]
+    for columna in ("Punto", "Turno", "TipoDato"):
+        if columna in datos.columns:
+            valores = datos[columna].fillna("").astype(str).unique()
+            if len(valores) == 1:
+                partes_clave.append(valores[0].casefold().replace(" ", "_"))
+    clave_contexto = "_".join(partes_clave)
+
+    datos = filtrar_por_fecha(datos, clave=clave_contexto)
     if datos.empty:
         st.info("No hay datos para el rango de fechas seleccionado.")
         return
 
-    datos_filtrados = filtrar_por_parametro(datos)
+    datos_filtrados = filtrar_por_parametro(datos, clave=clave_contexto)
     if datos_filtrados.empty:
         st.info("No hay datos para el parámetro seleccionado.")
         return
@@ -366,22 +398,24 @@ def mostrar_dashboard_area(nombre_area, titulo):
         else ""
     )
 
-    tipo_recomendado = TIPO_GRAFICO_RECOMENDADO.get(parametro, "Líneas")
-    if st.session_state.get("parametro_tipo_grafico") != parametro:
-        st.session_state["tipo_grafico"] = tipo_recomendado
-        st.session_state["parametro_tipo_grafico"] = parametro
+    tipo_recomendado = TIPO_GRAFICO_RECOMENDADO.get(parametro, "Barras")
+    clave_tipo = f"tipo_grafico_{clave_contexto}"
+    clave_parametro_tipo = f"parametro_tipo_grafico_{clave_contexto}"
+    if st.session_state.get(clave_parametro_tipo) != parametro:
+        st.session_state[clave_tipo] = tipo_recomendado
+        st.session_state[clave_parametro_tipo] = parametro
 
     tipo_grafico = st.sidebar.selectbox(
         "Tipo de gráfico",
         ["Líneas", "Barras"],
-        key="tipo_grafico",
+        key=clave_tipo,
     )
     st.sidebar.caption(f"Gráfico recomendado: {tipo_recomendado}.")
 
     mostrar_tendencia = st.sidebar.toggle(
         "Mostrar tendencia",
         value=True,
-        key="mostrar_tendencia",
+        key=f"mostrar_tendencia_{clave_contexto}",
     )
 
     col1, col2, col3 = st.columns(3)
@@ -392,16 +426,20 @@ def mostrar_dashboard_area(nombre_area, titulo):
         f"{datos_filtrados['Valor'].iloc[-1]:.2f} {unidad}".strip(),
     )
 
-    fecha_inicio = datos_filtrados["Fecha"].min().normalize()
-    fecha_fin = datos_filtrados["Fecha"].max().normalize()
+    datos_serie = (
+        datos_filtrados.groupby("Fecha", as_index=False, sort=True)["Valor"]
+        .mean()
+    )
+    fecha_inicio = datos_serie["Fecha"].min().normalize()
+    fecha_fin = datos_serie["Fecha"].max().normalize()
     dias = pd.date_range(fecha_inicio, fecha_fin, freq="D")
 
-    # La importación conserva solo mediciones válidas. Para el gráfico se
-    # reconstruyen todos los días del período y los faltantes se muestran en 0.
+    # Si el contexto contiene más de una medición diaria, el gráfico usa su
+    # promedio diario; la tabla conserva cada registro original.
     datos_grafico = (
         pd.DataFrame({"Fecha": dias})
         .merge(
-            datos_filtrados[["Fecha", "Valor"]],
+            datos_serie[["Fecha", "Valor"]],
             on="Fecha",
             how="left",
         )
@@ -421,9 +459,9 @@ def mostrar_dashboard_area(nombre_area, titulo):
     if tipo_grafico == "Barras":
         fig = px.bar(datos_grafico, **opciones)
     else:
-        datos_linea = datos_filtrados[
-            datos_filtrados["Valor"].notna()
-            & datos_filtrados["Valor"].ne(0)
+        datos_linea = datos_serie[
+            datos_serie["Valor"].notna()
+            & datos_serie["Valor"].ne(0)
         ].copy()
 
         if datos_linea.empty:
@@ -437,7 +475,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
     if mostrar_tendencia:
         metodo_tendencia = agregar_tendencia(
             fig,
-            datos_filtrados,
+            datos_serie,
             parametro,
             unidad,
         )
