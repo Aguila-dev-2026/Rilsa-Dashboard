@@ -26,7 +26,7 @@ from reportlab.platypus import (
 )
 
 VINO = HexColor("#6D1F2B")
-VINO_OSCURO = HexColor("#48121A")
+VINO_PROFUNDO = HexColor("#48121A")
 COBRE = HexColor("#B36F3D")
 TINTA = HexColor("#171514")
 GRIS = HexColor("#756E67")
@@ -78,7 +78,7 @@ def _estilos() -> dict[str, ParagraphStyle]:
             fontName="Helvetica-Bold",
             fontSize=24,
             leading=29,
-            textColor=VINO_OSCURO,
+            textColor=VINO_PROFUNDO,
             spaceAfter=8,
         ),
         "subtitulo": ParagraphStyle(
@@ -95,7 +95,7 @@ def _estilos() -> dict[str, ParagraphStyle]:
             fontName="Helvetica-Bold",
             fontSize=16,
             leading=20,
-            textColor=VINO_OSCURO,
+            textColor=VINO_PROFUNDO,
             spaceBefore=12,
             spaceAfter=8,
         ),
@@ -177,7 +177,7 @@ def _tabla_resumen(datos: pd.DataFrame, estilos: dict[str, ParagraphStyle]) -> T
     tabla.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), VINO_OSCURO),
+                ("BACKGROUND", (0, 0), (-1, 0), VINO_PROFUNDO),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("FONTSIZE", (0, 0), (-1, -1), 7.5),
@@ -335,7 +335,7 @@ def generar_informe_pdf(
         TableStyle(
             [
                 ("BACKGROUND", (0, 0), (0, -1), PAPEL),
-                ("TEXTCOLOR", (0, 0), (0, -1), VINO_OSCURO),
+                ("TEXTCOLOR", (0, 0), (0, -1), VINO_PROFUNDO),
                 ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
                 ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
                 ("FONTSIZE", (0, 0), (-1, -1), 8.5),
