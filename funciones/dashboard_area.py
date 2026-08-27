@@ -209,7 +209,16 @@ def mostrar_dashboard_area(nombre_area, titulo):
     if tipo_grafico == "Barras":
         fig = px.bar(datos_filtrados, **opciones)
     else:
-        fig = px.line(datos_filtrados, markers=True, **opciones)
+        datos_linea = datos_filtrados[
+            datos_filtrados["Valor"].notna()
+            & datos_filtrados["Valor"].ne(0)
+        ].copy()
+
+        if datos_linea.empty:
+            st.info("No hay valores distintos de cero para mostrar en el gráfico lineal.")
+            return
+
+        fig = px.line(datos_linea, markers=True, **opciones)
 
     aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad)
 
