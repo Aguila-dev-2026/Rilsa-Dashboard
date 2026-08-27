@@ -102,26 +102,56 @@ def aplicar_tema(modo: str) -> None:
           border-color: {tema["linea"]};
         }}
 
-        .theme-labels {{
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin: 0.25rem 0 0.1rem;
+        [class*="st-key-tema_visual"] {{
+          position: fixed;
+          top: 0.7rem;
+          right: 1rem;
+          z-index: 1002;
+          width: 108px;
+          min-height: 34px;
+          padding: 0.12rem 0.48rem;
+          background: {tema["panel"]};
+          border: 1px solid {tema["linea"]};
+          border-radius: 999px;
+          box-shadow: {tema["sombra"]};
+        }}
+
+        [class*="st-key-tema_visual"]::before,
+        [class*="st-key-tema_visual"]::after {{
+          position: absolute;
+          top: 50%;
+          transform: translateY(-52%);
           color: {tema["muted"]};
-          font-size: 0.78rem;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
+          font-size: 0.83rem;
+          line-height: 1;
+          pointer-events: none;
+        }}
+
+        [class*="st-key-tema_visual"]::before {{
+          content: "☼";
+          left: 0.48rem;
+        }}
+
+        [class*="st-key-tema_visual"]::after {{
+          content: "☾";
+          right: 0.48rem;
         }}
 
         [class*="st-key-tema_visual"] [data-testid="stSlider"] {{
-          padding-top: 0;
+          padding: 0 1.05rem;
+          margin: 0;
+        }}
+
+        [class*="st-key-tema_visual"] [data-testid="stSlider"] > div {{
+          min-height: 30px;
         }}
 
         [class*="st-key-tema_visual"] [role="slider"] {{
+          width: 0.76rem;
+          height: 0.76rem;
           background: #B36F3D;
           border-color: #FFF8EC;
-          box-shadow: 0 0 0 3px rgba(179,111,61,0.18);
+          box-shadow: 0 0 0 2px rgba(179,111,61,0.16);
         }}
 
         .stButton > button[kind="primary"] {{
@@ -153,16 +183,7 @@ def configurar_tema() -> str:
         except (AttributeError, RuntimeError):
             st.session_state.tema_visual = 0
 
-    st.sidebar.markdown(
-        """
-        <div class="theme-labels">
-          <span>☀️ Light</span>
-          <span>Dark 🌙</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    valor = st.sidebar.slider(
+    valor = st.slider(
         "Tema visual",
         min_value=0,
         max_value=1,
