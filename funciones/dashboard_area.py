@@ -70,7 +70,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         hovermode="x unified",
         bargap=0.28,
         barcornerradius=6,
-        margin=dict(l=18, r=18, t=78, b=92),
+        margin=dict(l=82, r=18, t=78, b=92),
     )
     fig.update_xaxes(
         title=None,
@@ -89,6 +89,8 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         showline=False,
         tickfont=dict(size=12, color="#5F5852"),
         title_font=dict(size=12, color="#756E67"),
+        title_standoff=22,
+        automargin=True,
     )
 
 
