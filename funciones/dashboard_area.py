@@ -1,9 +1,63 @@
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import streamlit.components.v1 as components
 
 from funciones.cargar_datos import cargar_datos_operacionales
 from funciones.filtros import filtrar_por_fecha, filtrar_por_parametro
+
+
+CONFIGURACION_GRAFICO = {
+    "displayModeBar": False,
+    "scrollZoom": False,
+    "responsive": True,
+}
+
+
+def mostrar_grafico_desplazable(fig, cantidad_dias):
+    """Mantiene un ancho legible por día y añade scroll desde el día 32."""
+    ancho_grafico = cantidad_dias * 48
+    fig.update_layout(
+        width=ancho_grafico,
+        height=480,
+        autosize=False,
+    )
+
+    grafico_html = fig.to_html(
+        full_html=False,
+        include_plotlyjs="cdn",
+        config=CONFIGURACION_GRAFICO,
+    )
+    html = f"""
+    <!doctype html>
+    <html>
+    <head>
+      <style>
+        html, body {{
+          margin: 0;
+          padding: 0;
+          overflow: hidden;
+        }}
+        .contenedor-grafico {{
+          width: 100%;
+          overflow-x: auto;
+          overflow-y: hidden;
+          padding-bottom: 8px;
+          scrollbar-gutter: stable;
+        }}
+        .contenido-grafico {{
+          width: {ancho_grafico}px;
+        }}
+      </style>
+    </head>
+    <body>
+      <div class="contenedor-grafico">
+        <div class="contenido-grafico">{grafico_html}</div>
+      </div>
+    </body>
+    </html>
+    """
+    components.html(html, height=530, scrolling=False)
 
 
 def mostrar_dashboard_area(nombre_area, titulo):
@@ -100,11 +154,14 @@ def mostrar_dashboard_area(nombre_area, titulo):
     fig.update_yaxes(fixedrange=True)
 
     st.caption("El gráfico muestra todos los días del período seleccionado.")
-    st.plotly_chart(
-        fig,
-        width="stretch",
-        config={"displayModeBar": False, "scrollZoom": False},
-    )
+    if len(dias) > 31:
+        mostrar_grafico_desplazable(fig, len(dias))
+    else:
+        st.plotly_chart(
+            fig,
+            width="stretch",
+            config=CONFIGURACION_GRAFICO,
+        )
 
     st.subheader("Registros mostrados")
     st.dataframe(
