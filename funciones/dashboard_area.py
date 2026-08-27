@@ -143,9 +143,9 @@ def agregar_tendencia(fig, datos, parametro, unidad, ajustes=None):
             fig.add_hrect(
                 y0=limite_inferior,
                 y1=limite_superior,
-            fillcolor="rgba(46,106,77,0.14)",
-            line_width=0,
-            layer="below",
+                fillcolor="rgba(46,106,77,0.14)",
+                line_width=0,
+                layer="below",
                 annotation_text=(
                     f"Banda operativa pH {limite_inferior:g}–{limite_superior:g}"
                 ),
@@ -388,6 +388,11 @@ def mostrar_dashboard_area(nombre_area, titulo):
         parametro,
         "Theil–Sen",
     )
+    mostrar_tendencia = st.sidebar.toggle(
+        "Mostrar tendencia",
+        value=True,
+        key="mostrar_tendencia",
+    )
     ajustes_tendencia = {}
     with st.sidebar.expander("Ajustar cálculo de tendencia"):
         if metodo_recomendado == "EWMA adaptativa":
@@ -474,11 +479,6 @@ def mostrar_dashboard_area(nombre_area, titulo):
 
     aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad)
 
-    mostrar_tendencia = st.sidebar.toggle(
-        "Mostrar tendencia",
-        value=True,
-        key="mostrar_tendencia",
-    )
     if mostrar_tendencia:
         metodo_tendencia = agregar_tendencia(
             fig,
