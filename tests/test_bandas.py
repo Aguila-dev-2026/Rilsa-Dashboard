@@ -19,6 +19,7 @@ class BandasTests(unittest.TestCase):
         self.assertIn("number_input", funciones["configurar_bandas"])
         self.assertIn("Añadir banda inferior", funciones["configurar_bandas"])
         self.assertIn("Añadir banda superior", funciones["configurar_bandas"])
+        self.assertIn("Mostrar bandas normativas", funciones["configurar_bandas"])
 
 
 if __name__ == "__main__":
