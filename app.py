@@ -26,20 +26,20 @@ def aplicar_identidad_volta():
         """
         <style>
           [data-testid="stAppViewContainer"] { background: #F7F9FC; }
-          [data-testid="stSidebar"] { background: #EAF0F6; }
+          [data-testid="stSidebar"] { background: #40566C; }
           [data-testid="stSidebar"] h1,
           [data-testid="stSidebar"] h2,
           [data-testid="stSidebar"] h3,
           [data-testid="stSidebar"] p,
-          [data-testid="stSidebar"] label { color: #263B70 !important; }
+          [data-testid="stSidebar"] label { color: #FFFFFF !important; }
           [data-testid="stSidebar"] [data-baseweb="radio"] > div {
-            border-color: #AFC1D1;
+            border-color: rgba(255,255,255,.28);
           }
           [data-testid="stSidebar"] [data-baseweb="radio"] [aria-checked="true"] {
             color: #67C5E8 !important;
             font-weight: 700;
           }
-          [data-testid="stSidebar"] hr { border-color: #C8D6E3; }
+          [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,.24); }
           h1, h2, h3 { color: #263B70 !important; letter-spacing: -.02em; }
           [data-testid="stMetric"] {
             background: #FFFFFF;
