@@ -129,3 +129,12 @@ else:
         from funciones.dashboard_area import mostrar_dashboard_area
 
         mostrar_dashboard_area(nombre_area=nombre_area, titulo=titulo)
+
+if datos_disponibles:
+    from funciones.cargar_datos import cargar_datos_operacionales
+    from funciones.informe_impresion import generar_informe_impresion
+
+    st.markdown(
+        generar_informe_impresion(cargar_datos_operacionales()),
+        unsafe_allow_html=True,
+    )
