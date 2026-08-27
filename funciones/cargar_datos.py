@@ -4,6 +4,8 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 
+from funciones.configuracion import obtener_configuracion
+
 
 RAIZ_PROYECTO = Path(__file__).resolve().parents[1]
 CARPETA_GENERADOS = RAIZ_PROYECTO / "datos_generados"
@@ -161,6 +163,55 @@ def _consultar_catalogo_sqlite(nombre_area=None):
     )
 
 
+@st.cache_data(show_spinner=False, ttl=60, max_entries=64)
+def _consultar_postgres_cacheado(
+    database_url,
+    nombre_area,
+    punto,
+    parametro,
+    fecha_inicio,
+    fecha_fin,
+):
+    """Comparte consultas durante un minuto entre sesiones del servidor."""
+    from funciones.postgres import consultar_mediciones
+
+    return consultar_mediciones(
+        database_url,
+        nombre_area=nombre_area,
+        punto=punto,
+        parametro=parametro,
+        fecha_inicio=_fecha_para_sql(fecha_inicio),
+        fecha_fin=_fecha_para_sql(fecha_fin),
+    )
+
+
+@st.cache_data(show_spinner=False, ttl=60, max_entries=16)
+def _consultar_catalogo_postgres_cacheado(database_url, nombre_area):
+    from funciones.postgres import consultar_catalogo
+
+    return consultar_catalogo(database_url, nombre_area)
+
+
+@st.cache_data(show_spinner=False, ttl=30, max_entries=4)
+def _hay_mediciones_postgres_cacheado(database_url):
+    from funciones.postgres import hay_mediciones
+
+    return hay_mediciones(database_url)
+
+
+def hay_datos_operacionales():
+    """Indica si la fuente activa contiene al menos una medición."""
+    configuracion = obtener_configuracion()
+    if configuracion.es_nube:
+        if not configuracion.database_url:
+            return False
+        return _hay_mediciones_postgres_cacheado(configuracion.database_url)
+    return BASE_DATOS.exists() or any(
+        (CARPETA_GENERADOS / nombre).exists()
+        for nombre in ARCHIVOS_OPERACIONALES
+    )
+
+
 def _detener_por_archivo(ruta):
     st.error(f"No existe {ruta.relative_to(RAIZ_PROYECTO)}. Actualiza los datos desde Excel.")
     st.stop()
@@ -204,6 +255,29 @@ def cargar_datos_operacionales(
     fecha_inicio=None,
     fecha_fin=None,
 ):
+    configuracion = obtener_configuracion()
+    if configuracion.es_nube:
+        if not configuracion.database_url:
+            st.error("Falta configurar DATABASE_URL para el modo nube.")
+            st.stop()
+        try:
+            datos = _consultar_postgres_cacheado(
+                configuracion.database_url,
+                nombre_area,
+                punto,
+                parametro,
+                fecha_inicio,
+                fecha_fin,
+            )
+            _validar_columnas(datos, COLUMNAS_LARGAS, Path("PostgreSQL"))
+            return _normalizar_datos_largos(datos)
+        except Exception as error:
+            st.error(
+                "No fue posible consultar PostgreSQL. "
+                f"Revisa la conexión del servicio. Detalle: {error}"
+            )
+            st.stop()
+
     if BASE_DATOS.exists():
         try:
             datos = _consultar_sqlite(
@@ -279,6 +353,25 @@ def cargar_datos_operacionales(
 
 
 def cargar_catalogo_operacional(nombre_area=None):
+    configuracion = obtener_configuracion()
+    if configuracion.es_nube:
+        if not configuracion.database_url:
+            st.error("Falta configurar DATABASE_URL para el modo nube.")
+            st.stop()
+        try:
+            catalogo = _consultar_catalogo_postgres_cacheado(
+                configuracion.database_url,
+                nombre_area,
+            )
+            _validar_columnas(catalogo, COLUMNAS_CATALOGO, Path("PostgreSQL"))
+            return catalogo
+        except Exception as error:
+            st.error(
+                "No fue posible consultar el catálogo de PostgreSQL. "
+                f"Detalle: {error}"
+            )
+            st.stop()
+
     if BASE_DATOS.exists():
         try:
             catalogo = _consultar_catalogo_sqlite(nombre_area)
