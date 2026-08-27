@@ -69,6 +69,9 @@ def aplicar_identidad_volta():
             rx: 7px;
             ry: 7px;
           }
+          .js-plotly-plot .hoverlayer .axistext {
+            display: none !important;
+          }
         </style>
         """
     )
