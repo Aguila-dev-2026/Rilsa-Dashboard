@@ -20,6 +20,15 @@ class BandasTests(unittest.TestCase):
         self.assertIn("Añadir banda inferior", funciones["configurar_bandas"])
         self.assertIn("Añadir banda superior", funciones["configurar_bandas"])
         self.assertIn("Mostrar bandas normativas", funciones["configurar_bandas"])
+        self.assertIn("BANDAS_NCH1333_RIEGO", funciones["obtener_banda_normativa"])
+        for parametro in (
+            "Conductividad",
+            "Sulfato",
+            "Boro total",
+            "Sólidos disueltos",
+            "Cloruro",
+        ):
+            self.assertIn(parametro, ruta.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
