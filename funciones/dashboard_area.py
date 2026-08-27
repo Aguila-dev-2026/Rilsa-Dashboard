@@ -14,13 +14,15 @@ CONFIGURACION_GRAFICO = {
 }
 
 
-def mostrar_grafico_desplazable(fig, cantidad_dias):
-    """Mantiene un ancho legible por día y añade scroll desde el día 32."""
-    ancho_grafico = cantidad_dias * 48
+def mostrar_grafico_adaptativo(fig, cantidad_dias):
+    """Usa el mismo visor y activa scroll únicamente desde el día 32."""
+    requiere_scroll = cantidad_dias > 31
+    ancho_grafico = cantidad_dias * 48 if requiere_scroll else None
+
     fig.update_layout(
         width=ancho_grafico,
         height=480,
-        autosize=False,
+        autosize=not requiere_scroll,
     )
 
     grafico_html = fig.to_html(
@@ -28,25 +30,30 @@ def mostrar_grafico_desplazable(fig, cantidad_dias):
         include_plotlyjs="cdn",
         config=CONFIGURACION_GRAFICO,
     )
+    ancho_contenido = f"{ancho_grafico}px" if requiere_scroll else "100%"
+    desbordamiento = "auto" if requiere_scroll else "hidden"
+
     html = f"""
     <!doctype html>
     <html>
     <head>
       <style>
         html, body {{
+          width: 100%;
           margin: 0;
           padding: 0;
           overflow: hidden;
         }}
         .contenedor-grafico {{
           width: 100%;
-          overflow-x: auto;
+          overflow-x: {desbordamiento};
           overflow-y: hidden;
           padding-bottom: 8px;
           scrollbar-gutter: stable;
         }}
         .contenido-grafico {{
-          width: {ancho_grafico}px;
+          width: {ancho_contenido};
+          min-width: {ancho_contenido};
         }}
       </style>
     </head>
@@ -154,14 +161,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
     fig.update_yaxes(fixedrange=True)
 
     st.caption("El gráfico muestra todos los días del período seleccionado.")
-    if len(dias) > 31:
-        mostrar_grafico_desplazable(fig, len(dias))
-    else:
-        st.plotly_chart(
-            fig,
-            width="stretch",
-            config=CONFIGURACION_GRAFICO,
-        )
+    mostrar_grafico_adaptativo(fig, len(dias))
 
     st.subheader("Registros mostrados")
     st.dataframe(
