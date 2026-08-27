@@ -103,7 +103,12 @@ def cargar_datos_operacionales(nombre_area=None):
             datos = _consultar_sqlite(nombre_area)
             _validar_columnas(datos, COLUMNAS_LARGAS, BASE_DATOS)
             return _normalizar_datos_largos(datos)
-        except (sqlite3.DatabaseError, OSError, ValueError) as error:
+        except (
+            sqlite3.DatabaseError,
+            pd.errors.DatabaseError,
+            OSError,
+            ValueError,
+        ) as error:
             st.warning(
                 "No fue posible consultar SQLite. "
                 "Se utilizarán temporalmente los Excel generados. "
