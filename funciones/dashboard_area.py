@@ -1,87 +1,9 @@
+import pandas as pd
 import plotly.express as px
 import streamlit as st
-import streamlit.components.v1 as components
 
 from funciones.cargar_datos import cargar_datos_operacionales
 from funciones.filtros import filtrar_por_fecha, filtrar_por_parametro
-
-
-def mostrar_grafico_con_gesto_touchpad(fig):
-    """Renderiza Plotly con desplazamiento temporal mediante dos dedos."""
-    html = """
-    <!doctype html>
-    <html>
-    <head>
-      <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-      <style>
-        html, body { margin: 0; padding: 0; overflow: hidden; }
-        #grafico { width: 100%; height: 510px; }
-      </style>
-    </head>
-    <body>
-      <div id="grafico"></div>
-      <script>
-        const figura = FIGURA_JSON;
-        const grafico = document.getElementById("grafico");
-
-        Plotly.newPlot(grafico, figura.data, figura.layout, {
-          displayModeBar: false,
-          scrollZoom: false,
-          responsive: true,
-          modeBarButtonsToRemove: [
-            "zoom2d", "select2d", "lasso2d", "autoScale2d"
-          ]
-        }).then(() => {
-          grafico.addEventListener("wheel", (evento) => {
-            const ejeX = grafico._fullLayout.xaxis;
-            const inicio = new Date(ejeX.range[0]).getTime();
-            const fin = new Date(ejeX.range[1]).getTime();
-
-            if (!Number.isFinite(inicio) || !Number.isFinite(fin)) {
-              return;
-            }
-
-            evento.preventDefault();
-            const ancho = grafico.getBoundingClientRect().width;
-            const posicion = Math.min(
-              1,
-              Math.max(0, (evento.clientX - grafico.getBoundingClientRect().left) / ancho)
-            );
-            const duracion = fin - inicio;
-
-            // Chrome y Firefox representan el pellizco del touchpad como un
-            // wheel con ctrlKey. Se escala solo la ventana temporal.
-            if (evento.ctrlKey) {
-              const factor = Math.exp(evento.deltaY * 0.01);
-              const nuevaDuracion = Math.max(86400000, duracion * factor);
-              const ancla = inicio + duracion * posicion;
-              Plotly.relayout(grafico, {
-                "xaxis.range": [
-                  new Date(ancla - nuevaDuracion * posicion).toISOString(),
-                  new Date(ancla + nuevaDuracion * (1 - posicion)).toISOString()
-                ]
-              });
-              return;
-            }
-
-            // Solo el gesto horizontal controla el gráfico. El gesto
-            // vertical no se intercepta y conserva el scroll de la página.
-            if (Math.abs(evento.deltaX) <= Math.abs(evento.deltaY)) return;
-            const desplazamiento = evento.deltaX * duracion / ancho;
-            Plotly.relayout(grafico, {
-              "xaxis.range": [
-                new Date(inicio + desplazamiento).toISOString(),
-                new Date(fin + desplazamiento).toISOString()
-              ]
-            });
-          }, { passive: false });
-        });
-      </script>
-    </body>
-    </html>
-    """.replace("FIGURA_JSON", fig.to_json())
-
-    components.html(html, height=520, scrolling=False)
 
 
 def mostrar_dashboard_area(nombre_area, titulo):
@@ -144,19 +66,31 @@ def mostrar_dashboard_area(nombre_area, titulo):
         fig = px.line(datos_filtrados, markers=True, **opciones)
         fig.update_traces(line_width=3, marker_size=7)
 
+    fecha_inicio = datos_filtrados["Fecha"].min().normalize()
+    fecha_fin = datos_filtrados["Fecha"].max().normalize()
+    dias = pd.date_range(fecha_inicio, fecha_fin, freq="D")
+
     fig.update_layout(
         hovermode="x unified",
-        dragmode="pan",
-        margin=dict(l=10, r=10, t=55, b=10),
+        margin=dict(l=10, r=10, t=55, b=90),
     )
-    fig.update_xaxes(fixedrange=False)
+    fig.update_xaxes(
+        range=[fecha_inicio, fecha_fin],
+        tickmode="array",
+        tickvals=dias,
+        ticktext=[dia.strftime("%d/%m") for dia in dias],
+        tickangle=-45,
+        fixedrange=True,
+        automargin=True,
+    )
     fig.update_yaxes(fixedrange=True)
 
-    st.caption(
-        "Desliza horizontalmente con dos dedos para recorrer el tiempo; "
-        "el desplazamiento vertical sigue moviendo la página. Pellizca para acercar o alejar."
+    st.caption("El gráfico muestra todos los días del período seleccionado.")
+    st.plotly_chart(
+        fig,
+        width="stretch",
+        config={"displayModeBar": False, "scrollZoom": False},
     )
-    mostrar_grafico_con_gesto_touchpad(fig)
 
     st.subheader("Registros mostrados")
     st.dataframe(
