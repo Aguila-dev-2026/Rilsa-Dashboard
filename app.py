@@ -4,7 +4,6 @@ import streamlit as st
 
 from dashboards.fisico_quimico import mostrar_fisico_quimico
 from funciones.cargar_datos import CARPETA_GENERADOS
-from funciones.tema import configurar_tema
 from importar import ENTRADA_PREDETERMINADA, importar_fisico_quimico
 
 
@@ -12,7 +11,6 @@ ARCHIVO_FISICO_QUIMICO = CARPETA_GENERADOS / "fisico_quimico.xlsx"
 
 
 st.set_page_config(page_title="Planta RILES", layout="wide")
-configurar_tema()
 
 st.title("📊 Dashboard Operacional Planta RILES")
 
