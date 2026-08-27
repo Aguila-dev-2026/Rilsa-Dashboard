@@ -71,8 +71,12 @@ def convertir_medicion(valor: object) -> tuple[float | None, str]:
 def normalizar_turno(valor: object) -> str:
     if valor is None:
         return ""
-    texto = str(valor).strip()
-    return texto if texto.casefold() in {"mañana", "tarde", "noche"} else ""
+    texto = str(valor).strip().casefold()
+    return {
+        "mañana": "Mañana",
+        "tarde": "Tarde",
+        "noche": "Noche",
+    }.get(texto, "")
 
 
 def agregar_registro(
