@@ -77,6 +77,22 @@ TIPO_TENDENCIA_RECOMENDADA = {
     "pH": "Theil–Sen",
 }
 
+# Referencias NCh 1333 para uso de agua de riego. Boro se presenta con el
+# valor conservador para cultivos sensibles; puede ajustarse según el cultivo.
+BANDAS_NCH1333_RIEGO = {
+    "pH": {"inferior": 5.5, "superior": 9.0, "etiqueta": "NCh 1333 · pH 5,5–9,0"},
+    "Conductividad": {"superior": 0.75, "etiqueta": "NCh 1333 · CE 0,75 mS/cm"},
+    "Conductividad [mS]": {"superior": 0.75, "etiqueta": "NCh 1333 · CE 0,75 mS/cm"},
+    "Sulfato": {"superior": 250.0, "etiqueta": "NCh 1333 · Sulfato 250 mg/L"},
+    "Boro total": {"superior": 0.75, "etiqueta": "NCh 1333 · Boro 0,75 mg/L"},
+    "Sólidos disueltos": {"superior": 500.0, "etiqueta": "NCh 1333 · Sólidos disueltos 500 mg/L"},
+    "Cloruro": {"superior": 200.0, "etiqueta": "NCh 1333 · Cloruro 200 mg/L"},
+}
+
+
+def obtener_banda_normativa(parametro):
+    return BANDAS_NCH1333_RIEGO.get(parametro)
+
 
 def metodo_tendencia_recomendado(parametro, unidad):
     unidades_ewma = {"kg", "kg/día", "ton", "m3", "m3/día", "m³", "m³/día"}
@@ -173,26 +189,39 @@ def agregar_bandas(fig, parametro, limites_internos=None):
         limites_internos is None
         or limites_internos.get("normativa", True)
     )
-    if parametro == "pH" and mostrar_normativa:
-        fig.add_hrect(
-            y0=5.5,
-            y1=9.0,
-            fillcolor="rgba(46,106,77,0.14)",
-            line_width=0,
-            layer="below",
-            annotation_text="Límite NCh 1333 · pH 5,5–9,0",
-            annotation_position="top left",
-            annotation_font=dict(color="#4F9A75", size=12),
-        )
-        for limite in (5.5, 9.0):
-            fig.add_hline(
-                y=limite,
-                line=dict(
+    normativa = obtener_banda_normativa(parametro)
+    if normativa and mostrar_normativa:
+        limite_inferior_norma = normativa.get("inferior")
+        limite_superior_norma = normativa.get("superior")
+        if limite_inferior_norma is not None and limite_superior_norma is not None:
+            fig.add_hrect(
+                y0=limite_inferior_norma,
+                y1=limite_superior_norma,
+                fillcolor="rgba(46,106,77,0.14)",
+                line_width=0,
+                layer="below",
+                annotation_text=normativa["etiqueta"],
+                annotation_position="top left",
+                annotation_font=dict(color="#4F9A75", size=12),
+            )
+        for limite in (limite_inferior_norma, limite_superior_norma):
+            if limite is None:
+                continue
+            opciones_linea = {
+                "y": limite,
+                "line": dict(
                     color="rgba(79,154,117,0.78)",
                     width=1.2,
                     dash="dash",
                 ),
-            )
+            }
+            if limite_inferior_norma is None:
+                opciones_linea.update(
+                    annotation_text=normativa["etiqueta"],
+                    annotation_position="top right",
+                    annotation_font=dict(color="#4F9A75", size=12),
+                )
+            fig.add_hline(**opciones_linea)
 
     if limites_internos is None:
         return
@@ -579,7 +608,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
     limites_internos = configurar_bandas(
         datos_filtrados,
         clave=clave_banda,
-        tiene_bandas_normativas=parametro == "pH",
+        tiene_bandas_normativas=obtener_banda_normativa(parametro) is not None,
     )
 
     col1, col2, col3 = st.columns(3)
