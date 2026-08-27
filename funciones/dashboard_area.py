@@ -432,11 +432,15 @@ def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
 
 
 def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
-    azul_borde = "#0C638D"
+    tema_oscuro = st.session_state.get("tema_apariencia") == "Oscuro"
+    azul_borde = "#2C8FBC" if tema_oscuro else "#0C638D"
     cobre = "#D99A68"
-    texto = "#171514"
-    texto_eje = "#332E2A"
-    cuadricula = "rgba(23,21,20,0.24)"
+    texto = "#F1F6FA" if tema_oscuro else "#171514"
+    texto_eje = "#B7C8D6" if tema_oscuro else "#332E2A"
+    cuadricula = (
+        "rgba(183,200,214,0.20)" if tema_oscuro
+        else "rgba(23,21,20,0.24)"
+    )
 
     etiqueta_valor = f"%{{y:,.2f}} {unidad}".strip()
     fig.update_traces(
@@ -458,12 +462,15 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         fig.update_traces(
             line=dict(color=AZUL_CORPORATIVO, width=3.2),
             marker=dict(
-                color="#67C5E8",
+                color="#7DD8F3" if tema_oscuro else "#67C5E8",
                 size=7,
-                line=dict(color="#FFFDF8", width=1.4),
+                line=dict(color="#1B2A38" if tema_oscuro else "#FFFDF8", width=1.4),
             ),
             fill="tozeroy",
-            fillcolor="rgba(20,126,175,0.10)",
+            fillcolor=(
+                "rgba(63,169,213,0.18)" if tema_oscuro
+                else "rgba(20,126,175,0.10)"
+            ),
         )
 
     fig.update_layout(
@@ -480,8 +487,8 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         hoverlabel=dict(
-            bgcolor="#40566C",
-            bordercolor="#172C50",
+            bgcolor="#233646" if tema_oscuro else "#40566C",
+            bordercolor="#7DD8F3" if tema_oscuro else "#172C50",
             font=dict(color="#FFFFFF", size=13),
             align="left",
             namelength=-1,
@@ -493,9 +500,6 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     )
     fig.update_xaxes(
         title=None,
-        # Plotly restablece el encabezado automático si recibe una cadena vacía.
-        # El espacio de ancho cero lo oculta sin perder el hover unificado.
-        unifiedhovertitle_text="\u200b",
         showgrid=False,
         showline=True,
         linewidth=1,
@@ -517,9 +521,13 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
 def mostrar_grafico_desplazable(fig, cantidad_periodos):
     """Mantiene el gráfico claro y añade scroll desde el período visible 32."""
     ancho_grafico = cantidad_periodos * 24
-    texto = "#171514"
-    texto_eje = "#332E2A"
-    cuadricula = "rgba(23,21,20,0.24)"
+    tema_oscuro = st.session_state.get("tema_apariencia") == "Oscuro"
+    texto = "#F1F6FA" if tema_oscuro else "#171514"
+    texto_eje = "#B7C8D6" if tema_oscuro else "#332E2A"
+    cuadricula = (
+        "rgba(183,200,214,0.20)" if tema_oscuro
+        else "rgba(23,21,20,0.24)"
+    )
 
     fig.update_layout(
         template="plotly_white",
