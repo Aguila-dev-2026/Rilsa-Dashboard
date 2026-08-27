@@ -35,6 +35,29 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+También puedes instalar las dependencias con el atajo:
+
+```bash
+python tasks.py instalar
+```
+
+## Tareas rápidas
+
+`tasks.py` ofrece atajos multiplataforma y usa el intérprete del entorno virtual activo:
+
+```bash
+python tasks.py dev               # abre el dashboard
+python tasks.py actualizar        # importa ambas planillas y actualiza SQLite
+python tasks.py importar-fisico   # importa sólo la planilla físico-química
+python tasks.py importar-aerobico # importa sólo el análisis de planta
+```
+
+Para ver las tareas disponibles:
+
+```bash
+python tasks.py --help
+```
+
 ## Importar datos físico-químicos
 
 Guarda la planilla original en:
@@ -66,7 +89,7 @@ python importar.py --hoja "Nombre exacto de la hoja"
 Con el entorno virtual activado:
 
 ```bash
-python -m streamlit run app.py
+python tasks.py dev
 ```
 
 Streamlit abrirá el navegador. Si no lo hace, visita <http://localhost:8501>.
@@ -83,6 +106,7 @@ Fecha | Area | Parametro | Valor | Unidad
 
 ```text
 app.py                 Punto de entrada Streamlit
+tasks.py               Atajos para desarrollo e importación
 importar.py            Importador físico-químico provisional
 dashboards/            Vistas recuperadas por sección
 funciones/             Carga, filtros y visualización
