@@ -43,7 +43,7 @@ def aplicar_tema(modo: str) -> None:
         [data-testid="stAppViewContainer"],
         .stApp {{
           background:
-            radial-gradient(circle at 88% 4%, undefined, transparent 28rem),
+            radial-gradient(circle at 88% 4%, {tema["halo"]}, transparent 28rem),
             {tema["fondo"]};
           color: {tema["texto"]};
         }}
