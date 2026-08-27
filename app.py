@@ -108,6 +108,9 @@ except Exception as error:
     st.error(f"No fue posible comprobar la fuente de datos: {error}")
     st.stop()
 
+# Se reemplaza en cada ejecución por la selección vigente del dashboard.
+st.session_state.pop("datos_para_impresion", None)
+
 if pagina == "⚗️ Físico-químico":
     if not datos_disponibles:
         st.header("⚗️ Físico-químico")
@@ -130,11 +133,11 @@ else:
 
         mostrar_dashboard_area(nombre_area=nombre_area, titulo=titulo)
 
-if datos_disponibles:
-    from funciones.cargar_datos import cargar_datos_operacionales
+datos_para_impresion = st.session_state.get("datos_para_impresion")
+if datos_para_impresion is not None:
     from funciones.informe_impresion import generar_informe_impresion
 
     st.markdown(
-        generar_informe_impresion(cargar_datos_operacionales()),
+        generar_informe_impresion(datos_para_impresion),
         unsafe_allow_html=True,
     )
