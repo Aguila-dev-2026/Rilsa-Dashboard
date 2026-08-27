@@ -76,9 +76,10 @@ ORDEN_PUNTOS = [
 ]
 
 
-def filtrar_por_fecha(datos, columna_fecha="Fecha", clave="general"):
-    fecha_min = datos[columna_fecha].min().date()
-    fecha_max = datos[columna_fecha].max().date()
+def seleccionar_rango_fecha(fecha_min, fecha_max, clave="general"):
+    """Muestra el calendario sin necesitar cargar previamente todas las filas."""
+    fecha_min = fecha_min.date() if hasattr(fecha_min, "date") else fecha_min
+    fecha_max = fecha_max.date() if hasattr(fecha_max, "date") else fecha_max
     fecha_inicio_predeterminada = max(
         fecha_min,
         fecha_max - timedelta(days=29),
@@ -102,15 +103,25 @@ def filtrar_por_fecha(datos, columna_fecha="Fecha", clave="general"):
 
     if fecha_inicio > fecha_fin:
         st.sidebar.error("La fecha inicial no puede ser posterior a la final.")
+        return None, None
+
+    return fecha_inicio, fecha_fin
+
+
+def filtrar_por_fecha(datos, columna_fecha="Fecha", clave="general"):
+    fecha_inicio, fecha_fin = seleccionar_rango_fecha(
+        datos[columna_fecha].min(),
+        datos[columna_fecha].max(),
+        clave,
+    )
+    if fecha_inicio is None:
         return datos.iloc[0:0].copy()
 
     filtro = (
         (datos[columna_fecha].dt.date >= fecha_inicio)
         & (datos[columna_fecha].dt.date <= fecha_fin)
     )
-
     return datos[filtro].copy()
-
 
 def filtrar_dimension(
     datos,
