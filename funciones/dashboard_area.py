@@ -72,7 +72,12 @@ def mostrar_dashboard_area(nombre_area, titulo):
     margen_lateral = pd.Timedelta(hours=12)
     dias_semana = ("L", "M", "M", "J", "V", "S", "D")
     etiquetas_dias = [
-        f"{dia.day}<br>{dias_semana[dia.weekday()]}"
+        (
+            f"<span style='color:#2F6F9F'><b>{dia.day}<br>"
+            f"{dias_semana[dia.weekday()]}</b></span>"
+            if dia.weekday() >= 5
+            else f"{dia.day}<br>{dias_semana[dia.weekday()]}"
+        )
         for dia in dias
     ]
 
