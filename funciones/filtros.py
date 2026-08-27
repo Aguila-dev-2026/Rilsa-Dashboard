@@ -1,6 +1,25 @@
 import streamlit as st
 
 
+# Orden operativo deducido para la sección físico-química:
+# ingreso -> estanque y caracterización -> tratamiento químico -> lodos -> energía.
+ORDEN_PARAMETROS_PROCESO = [
+    "Ingresos [Ton]",
+    "Volumen TK3 [m3]",
+    "DQO TK3 [mg/l]",
+    "pH",
+    "Conductividad [mS]",
+    "Turbiedad [NTU]",
+    "Consumo Cal [kg]",
+    "Consumo PAC [kg]",
+    "Consumo P. Aniónico [kg]",
+    "Consumo P. Catiónico [kg]",
+    "% Humedad Lodo 1",
+    "% Humedad Lodo 2",
+    "Energía eléctrica consumida",
+]
+
+
 def filtrar_por_fecha(datos, columna_fecha="Fecha"):
     fecha_min = datos[columna_fecha].min().date()
     fecha_max = datos[columna_fecha].max().date()
@@ -35,7 +54,13 @@ def filtrar_por_fecha(datos, columna_fecha="Fecha"):
 
 
 def filtrar_por_parametro(datos, columna_parametro="Parametro"):
-    parametros = sorted(datos[columna_parametro].dropna().unique())
+    disponibles = set(datos[columna_parametro].dropna().unique())
+    parametros = [
+        parametro
+        for parametro in ORDEN_PARAMETROS_PROCESO
+        if parametro in disponibles
+    ]
+    parametros.extend(sorted(disponibles.difference(parametros)))
 
     parametro_seleccionado = st.sidebar.selectbox(
         "Parámetro a visualizar",
