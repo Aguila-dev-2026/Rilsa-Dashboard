@@ -4,11 +4,14 @@ import plotly.express as px
 import streamlit as st
 import streamlit.components.v1 as components
 
-from funciones.cargar_datos import cargar_datos_operacionales
+from funciones.cargar_datos import (
+    cargar_catalogo_operacional,
+    cargar_datos_operacionales,
+)
 from funciones.filtros import (
     filtrar_contexto_operacional,
-    filtrar_por_fecha,
     filtrar_por_parametro,
+    seleccionar_rango_fecha,
 )
 
 
@@ -354,10 +357,10 @@ def preparar_tabla_premium(datos):
 def mostrar_dashboard_area(nombre_area, titulo):
     st.header(titulo)
 
-    datos = cargar_datos_operacionales(nombre_area=nombre_area)
-    datos = datos[datos["Area"] == nombre_area].copy()
+    catalogo = cargar_catalogo_operacional(nombre_area=nombre_area)
+    catalogo = catalogo[catalogo["Area"].eq(nombre_area)].copy()
 
-    if datos.empty:
+    if catalogo.empty:
         st.warning(f"No hay datos disponibles para {nombre_area}.")
         return
 
@@ -367,36 +370,64 @@ def mostrar_dashboard_area(nombre_area, titulo):
         .replace("í", "i")
         .replace("ó", "o")
     )
-    datos = filtrar_contexto_operacional(datos, clave_area)
-    if datos.empty:
+    catalogo = filtrar_contexto_operacional(catalogo, clave_area)
+    if catalogo.empty:
         st.info("No hay datos para la selección de proceso indicada.")
         return
 
     partes_clave = [clave_area]
-    for columna in ("Punto",):
-        if columna in datos.columns:
-            valores = datos[columna].fillna("").astype(str).unique()
-            if len(valores) == 1:
-                partes_clave.append(valores[0].casefold().replace(" ", "_"))
+    if "Punto" in catalogo.columns:
+        valores = catalogo["Punto"].fillna("").astype(str).unique()
+        if len(valores) == 1:
+            partes_clave.append(valores[0].casefold().replace(" ", "_"))
     clave_contexto = "_".join(partes_clave)
 
-    datos = filtrar_por_fecha(datos, clave=clave_contexto)
-    if datos.empty:
-        st.info("No hay datos para el rango de fechas seleccionado.")
-        return
-
-    datos_filtrados = filtrar_por_parametro(datos, clave=clave_contexto)
-    if datos_filtrados.empty:
+    catalogo_parametro = filtrar_por_parametro(
+        catalogo,
+        clave=clave_contexto,
+    )
+    if catalogo_parametro.empty:
         st.info("No hay datos para el parámetro seleccionado.")
         return
 
-    datos_filtrados = datos_filtrados.sort_values("Fecha")
-    parametro = datos_filtrados["Parametro"].iat[0]
-    unidad = (
-        datos_filtrados["Unidad"].dropna().iloc[0]
-        if datos_filtrados["Unidad"].notna().any()
-        else ""
+    parametro = catalogo_parametro["Parametro"].iat[0]
+    unidades = (
+        catalogo_parametro["Unidad"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
     )
+    unidades = unidades[unidades.ne("")]
+    unidad = unidades.iat[0] if not unidades.empty else ""
+    punto = (
+        catalogo_parametro["Punto"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .iat[0]
+    )
+
+    clave_fechas = f"{clave_contexto}_{parametro.casefold()}"
+    fecha_inicio_seleccionada, fecha_fin_seleccionada = seleccionar_rango_fecha(
+        catalogo_parametro["FechaMin"].min(),
+        catalogo_parametro["FechaMax"].max(),
+        clave=clave_fechas,
+    )
+    if fecha_inicio_seleccionada is None:
+        return
+
+    datos_filtrados = cargar_datos_operacionales(
+        nombre_area=nombre_area,
+        punto=punto,
+        parametro=parametro,
+        fecha_inicio=fecha_inicio_seleccionada,
+        fecha_fin=fecha_fin_seleccionada,
+    )
+    if datos_filtrados.empty:
+        st.info("No hay datos para el rango de fechas seleccionado.")
+        return
+
+    datos_filtrados = datos_filtrados.sort_values("Fecha")
 
     tipo_recomendado = TIPO_GRAFICO_RECOMENDADO.get(parametro, "Barras")
     clave_tipo = f"tipo_grafico_{clave_contexto}"
@@ -430,8 +461,8 @@ def mostrar_dashboard_area(nombre_area, titulo):
         datos_filtrados.groupby("Fecha", as_index=False, sort=True)["Valor"]
         .mean()
     )
-    fecha_inicio = datos_serie["Fecha"].min().normalize()
-    fecha_fin = datos_serie["Fecha"].max().normalize()
+    fecha_inicio = pd.Timestamp(fecha_inicio_seleccionada).normalize()
+    fecha_fin = pd.Timestamp(fecha_fin_seleccionada).normalize()
     dias = pd.date_range(fecha_inicio, fecha_fin, freq="D")
 
     # Si el contexto contiene más de una medición diaria, el gráfico usa su
