@@ -1,16 +1,13 @@
 from pathlib import Path
-import sqlite3
 
 import streamlit as st
 
+from funciones.configuracion import obtener_configuracion
+
 RAIZ_PROYECTO = Path(__file__).resolve().parent
-CARPETA_GENERADOS = RAIZ_PROYECTO / "datos_generados"
 CARPETA_DATOS = RAIZ_PROYECTO / "datos"
-BASE_DATOS = CARPETA_GENERADOS / "riles.db"
 ENTRADA_FISICO_QUIMICO = CARPETA_DATOS / "Planilla Procesos RILES.xlsx"
 ENTRADA_ANALISIS_AEROBICO = CARPETA_DATOS / "Análisis Planta Aeróbica.xlsx"
-ARCHIVO_FISICO_QUIMICO = CARPETA_GENERADOS / "fisico_quimico.xlsx"
-ARCHIVO_ANALISIS_AEROBICO = CARPETA_GENERADOS / "analisis_planta_aerobica.xlsx"
 
 SECCIONES = {
     "⚗️ Físico-químico": ("Físico-químico", "⚗️ Físico-químico"),
@@ -22,6 +19,13 @@ SECCIONES = {
 
 st.set_page_config(page_title="Planta RILES", layout="wide")
 
+from funciones.cargar_datos import hay_datos_operacionales
+
+CONFIGURACION = obtener_configuracion()
+if CONFIGURACION.es_nube and CONFIGURACION.faltantes_base_datos():
+    st.error("El modo nube requiere configurar DATABASE_URL en Azure App Service.")
+    st.stop()
+
 st.title("📊 Dashboard Operacional Planta RILES")
 
 st.sidebar.title("Menú Planta RILES")
@@ -32,20 +36,39 @@ pagina = st.sidebar.radio(
 
 st.sidebar.divider()
 st.sidebar.subheader("Datos operacionales")
+st.sidebar.caption(
+    "Entorno: nube · PostgreSQL"
+    if CONFIGURACION.es_nube
+    else "Entorno: local · SQLite"
+)
 
 mensaje_actualizacion = st.session_state.pop("mensaje_actualizacion", None)
 if mensaje_actualizacion:
     tipo_mensaje, texto_mensaje = mensaje_actualizacion
     getattr(st.sidebar, tipo_mensaje)(texto_mensaje)
 
-if st.sidebar.button("Actualizar desde planillas", type="primary", use_container_width=True):
+mostrar_actualizacion = (
+    not CONFIGURACION.es_nube or CONFIGURACION.sincronizacion_manual
+)
+if mostrar_actualizacion and st.sidebar.button(
+    "Sincronizar SharePoint"
+    if CONFIGURACION.es_nube
+    else "Actualizar desde planillas",
+    type="primary",
+    use_container_width=True,
+):
     try:
         with st.spinner("Validando y actualizando los datos..."):
-            # OpenPyXL y los importadores se cargan solo cuando se solicitan.
-            from actualizar_datos import actualizar_datos
+            if CONFIGURACION.es_nube:
+                from sincronizar_nube import sincronizar_datos_nube
 
-            resultado = actualizar_datos()
-    except (FileNotFoundError, ValueError, OSError, sqlite3.DatabaseError) as error:
+                resultado = sincronizar_datos_nube()
+            else:
+                # OpenPyXL y los importadores se cargan solo cuando se solicitan.
+                from actualizar_datos import actualizar_datos
+
+                resultado = actualizar_datos()
+    except Exception as error:
         st.sidebar.error(f"No fue posible actualizar los datos: {error}")
     else:
         st.cache_data.clear()
@@ -62,24 +85,34 @@ if st.sidebar.button("Actualizar desde planillas", type="primary", use_container
             )
         st.session_state["mensaje_actualizacion"] = mensaje
         st.rerun()
+elif CONFIGURACION.es_nube:
+    st.sidebar.info("Datos centralizados y sincronizados desde SharePoint.")
 
 def mostrar_ruta_origen(ruta):
     ruta = Path(ruta)
     return ruta.relative_to(Path.cwd()) if ruta.is_relative_to(Path.cwd()) else ruta
 
 
-st.sidebar.caption(
-    "Orígenes:\n"
-    f"- {mostrar_ruta_origen(ENTRADA_FISICO_QUIMICO)}\n"
-    f"- {mostrar_ruta_origen(ENTRADA_ANALISIS_AEROBICO)}"
-)
+if CONFIGURACION.es_nube:
+    st.sidebar.caption("Origen: SharePoint · almacenamiento: PostgreSQL")
+else:
+    st.sidebar.caption(
+        "Orígenes:\n"
+        f"- {mostrar_ruta_origen(ENTRADA_FISICO_QUIMICO)}\n"
+        f"- {mostrar_ruta_origen(ENTRADA_ANALISIS_AEROBICO)}"
+    )
+
+try:
+    datos_disponibles = hay_datos_operacionales()
+except Exception as error:
+    st.error(f"No fue posible comprobar la fuente de datos: {error}")
+    st.stop()
 
 if pagina == "⚗️ Físico-químico":
-    if not (BASE_DATOS.exists() or ARCHIVO_FISICO_QUIMICO.exists()):
+    if not datos_disponibles:
         st.header("⚗️ Físico-químico")
         st.info(
-            "Aún no hay datos importados. Usa «Actualizar desde planillas» "
-            "en la barra lateral."
+            "Aún no hay datos sincronizados en la fuente activa."
         )
     else:
         from dashboards.fisico_quimico import mostrar_fisico_quimico
@@ -87,11 +120,10 @@ if pagina == "⚗️ Físico-químico":
         mostrar_fisico_quimico()
 else:
     nombre_area, titulo = SECCIONES[pagina]
-    if not (BASE_DATOS.exists() or ARCHIVO_ANALISIS_AEROBICO.exists()):
+    if not datos_disponibles:
         st.header(titulo)
         st.info(
-            "Aún no hay datos importados para esta sección. "
-            "Usa «Actualizar desde planillas» en la barra lateral."
+            "Aún no hay datos sincronizados para esta sección."
         )
     else:
         from funciones.dashboard_area import mostrar_dashboard_area
