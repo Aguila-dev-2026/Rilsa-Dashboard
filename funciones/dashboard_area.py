@@ -192,30 +192,44 @@ def agregar_bandas(fig, parametro, limites_internos=None):
     if limites_internos is None:
         return
 
-    limite_inferior, limite_superior = limites_internos
+    limite_inferior = limites_internos.get("inferior")
+    limite_superior = limites_internos.get("superior")
     rojo_alerta = "#A12C32"
-    fig.add_hrect(
-        y0=limite_inferior,
-        y1=limite_superior,
-        fillcolor="rgba(161,44,50,0.075)",
-        line_width=0,
-        layer="below",
-        annotation_text=(
-            "Banda interna · "
-            f"{limite_inferior:,.2f}–{limite_superior:,.2f}"
-        ),
-        annotation_position="bottom right",
-        annotation_font=dict(color=rojo_alerta, size=12),
+    if limite_inferior is not None and limite_superior is not None:
+        fig.add_hrect(
+            y0=limite_inferior,
+            y1=limite_superior,
+            fillcolor="rgba(161,44,50,0.075)",
+            line_width=0,
+            layer="below",
+            annotation_text=(
+                "Bandas internas · "
+                f"{limite_inferior:,.2f}–{limite_superior:,.2f}"
+            ),
+            annotation_position="bottom right",
+            annotation_font=dict(color=rojo_alerta, size=12),
+        )
+
+    bandas_activas = (
+        ("Banda inferior", limite_inferior),
+        ("Banda superior", limite_superior),
     )
-    for limite in (limite_inferior, limite_superior):
+    for nombre, limite in bandas_activas:
+        if limite is None:
+            continue
         fig.add_hline(
             y=limite,
             line=dict(color=rojo_alerta, width=2.4),
+            annotation_text=(f"{nombre} · {limite:,.2f}")
+            if limite_inferior is None or limite_superior is None
+            else None,
+            annotation_position="bottom right",
+            annotation_font=dict(color=rojo_alerta, size=12),
         )
 
 
-def configurar_banda_alerta(datos, clave):
-    """Recoge límites internos editables y los conserva durante la sesión."""
+def configurar_bandas(datos, clave):
+    """Recoge bandas independientes y las conserva durante la sesión."""
     valores = datos["Valor"].dropna().astype(float)
     if valores.empty:
         return None
@@ -226,34 +240,55 @@ def configurar_banda_alerta(datos, clave):
     paso = max(amplitud / 100, 0.01)
     superior_inicial = max(maximo_observado, minimo_observado + paso)
 
-    with st.sidebar.expander("Banda de alerta interna", expanded=False):
-        mostrar = st.toggle(
-            "Mostrar límites internos",
-            value=False,
-            key=f"mostrar_banda_interna_{clave}",
-        )
+    with st.sidebar.expander("Bandas", expanded=False):
         st.caption("Líneas rojas configurables para control operacional interno.")
-        if not mostrar:
-            return None
+        mostrar_inferior = st.toggle(
+            "Añadir banda inferior",
+            value=False,
+            key=f"mostrar_banda_inferior_{clave}",
+        )
+        limite_inferior = None
+        if mostrar_inferior:
+            limite_inferior = st.number_input(
+                "Límite inferior",
+                value=minimo_observado,
+                step=paso,
+                format="%.3f",
+                key=f"limite_interno_inferior_{clave}",
+            )
 
-        limite_inferior = st.number_input(
-            "Límite inferior",
-            value=minimo_observado,
-            step=paso,
-            format="%.3f",
-            key=f"limite_interno_inferior_{clave}",
+        mostrar_superior = st.toggle(
+            "Añadir banda superior",
+            value=False,
+            key=f"mostrar_banda_superior_{clave}",
         )
-        limite_superior = st.number_input(
-            "Límite superior",
-            value=superior_inicial,
-            step=paso,
-            format="%.3f",
-            key=f"limite_interno_superior_{clave}",
-        )
-        if limite_inferior >= limite_superior:
+        limite_superior = None
+        if mostrar_superior:
+            limite_superior = st.number_input(
+                "Límite superior",
+                value=superior_inicial,
+                step=paso,
+                format="%.3f",
+                key=f"limite_interno_superior_{clave}",
+            )
+
+        if limite_inferior is None and limite_superior is None:
+            return None
+        if (
+            limite_inferior is not None
+            and limite_superior is not None
+            and limite_inferior >= limite_superior
+        ):
             st.warning("El límite inferior debe ser menor que el superior.")
             return None
-        return float(limite_inferior), float(limite_superior)
+        return {
+            "inferior": float(limite_inferior)
+            if limite_inferior is not None
+            else None,
+            "superior": float(limite_superior)
+            if limite_superior is not None
+            else None,
+        }
 
 
 def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
@@ -523,7 +558,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
         key=f"mostrar_tendencia_{clave_contexto}",
     )
     clave_banda = f"{clave_contexto}_{parametro.casefold()}"
-    limites_internos = configurar_banda_alerta(
+    limites_internos = configurar_bandas(
         datos_filtrados,
         clave=clave_banda,
     )
