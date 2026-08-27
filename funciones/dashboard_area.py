@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -34,6 +35,114 @@ TIPO_GRAFICO_RECOMENDADO = {
     "Conductividad [mS]": "Líneas",
     "Turbiedad [NTU]": "Líneas",
 }
+
+TIPO_TENDENCIA_RECOMENDADA = {
+    "Ingresos [Ton]": "EWMA adaptativa",
+    "Consumo P. Catiónico [kg]": "EWMA adaptativa",
+    "Consumo P. Aniónico [kg]": "EWMA adaptativa",
+    "Consumo PAC [kg]": "EWMA adaptativa",
+    "Consumo Cal [kg]": "EWMA adaptativa",
+    "Energía eléctrica consumida": "EWMA adaptativa",
+    "% Humedad Lodo 1": "Theil–Sen",
+    "% Humedad Lodo 2": "Theil–Sen",
+    "Volumen TK3 [m3]": "Theil–Sen",
+    "DQO TK3 [mg/l]": "Theil–Sen",
+    "Conductividad [mS]": "Theil–Sen",
+    "Turbiedad [NTU]": "Theil–Sen",
+    "pH": "Mediana del período",
+}
+
+
+def calcular_tendencia(datos, parametro):
+    """Calcula la tendencia recomendada usando solo valores válidos del filtro."""
+    validos = (
+        datos.loc[
+            datos["Valor"].notna() & datos["Valor"].ne(0),
+            ["Fecha", "Valor"],
+        ]
+        .sort_values("Fecha")
+        .copy()
+    )
+    if len(validos) < 2:
+        return None, TIPO_TENDENCIA_RECOMENDADA.get(parametro, "Theil–Sen")
+
+    metodo = TIPO_TENDENCIA_RECOMENDADA.get(parametro, "Theil–Sen")
+
+    if metodo == "EWMA adaptativa":
+        cantidad = len(validos)
+        if cantidad <= 7:
+            ventana = 3
+        elif cantidad <= 31:
+            ventana = 7
+        elif cantidad <= 90:
+            ventana = 14
+        else:
+            ventana = 30
+
+        tendencia = validos.copy()
+        tendencia["Tendencia"] = (
+            tendencia["Valor"]
+            .ewm(span=min(ventana, cantidad), adjust=False)
+            .mean()
+        )
+        return tendencia[["Fecha", "Tendencia"]], metodo
+
+    if metodo == "Mediana del período":
+        mediana = validos["Valor"].median()
+        tendencia = pd.DataFrame(
+            {
+                "Fecha": [validos["Fecha"].iloc[0], validos["Fecha"].iloc[-1]],
+                "Tendencia": [mediana, mediana],
+            }
+        )
+        return tendencia, metodo
+
+    origen = validos["Fecha"].iloc[0]
+    x = (validos["Fecha"] - origen).dt.total_seconds().to_numpy() / 86400
+    y = validos["Valor"].to_numpy(dtype=float)
+    pendientes = [
+        (y[j] - y[i]) / (x[j] - x[i])
+        for i in range(len(x) - 1)
+        for j in range(i + 1, len(x))
+        if x[j] != x[i]
+    ]
+    if not pendientes:
+        return None, metodo
+
+    pendiente = float(np.median(pendientes))
+    intercepto = float(np.median(y - pendiente * x))
+    tendencia = validos[["Fecha"]].copy()
+    tendencia["Tendencia"] = intercepto + pendiente * x
+    return tendencia, metodo
+
+
+def agregar_tendencia(fig, datos, parametro, unidad):
+    tendencia, metodo = calcular_tendencia(datos, parametro)
+    if tendencia is None:
+        return metodo
+
+    sufijo_unidad = f" {unidad}" if unidad else ""
+    fig.add_scatter(
+        x=tendencia["Fecha"],
+        y=tendencia["Tendencia"],
+        mode="lines",
+        name=f"Tendencia · {metodo}",
+        line=dict(color=COBRE, width=3.2, dash="dot"),
+        hovertemplate=(
+            "<b>%{x|%d/%m/%Y}</b><br>"
+            f"Tendencia: %{{y:,.2f}}{sufijo_unidad}<extra></extra>"
+        ),
+    )
+    fig.update_layout(
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.01,
+            xanchor="right",
+            x=0.99,
+        )
+    )
+    return metodo
 
 
 def tema_nativo_oscuro():
@@ -245,7 +354,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
         ["Líneas", "Barras"],
         key="tipo_grafico",
     )
-    st.sidebar.caption(f"Recomendación para este parámetro: {tipo_recomendado}.")
+    st.sidebar.caption(f"Gráfico recomendado: {tipo_recomendado}.")
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Registros", len(datos_filtrados))
@@ -280,6 +389,13 @@ def mostrar_dashboard_area(nombre_area, titulo):
         fig = px.line(datos_linea, markers=True, **opciones)
 
     aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad)
+    metodo_tendencia = agregar_tendencia(
+        fig,
+        datos_filtrados,
+        parametro,
+        unidad,
+    )
+    st.sidebar.caption(f"Tendencia automática: {metodo_tendencia}.")
 
     fecha_inicio = datos_filtrados["Fecha"].min().normalize()
     fecha_fin = datos_filtrados["Fecha"].max().normalize()
