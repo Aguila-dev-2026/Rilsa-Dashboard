@@ -514,27 +514,62 @@ def mostrar_dashboard_area(nombre_area, titulo):
 
     margen_lateral = pd.Timedelta(hours=12)
     dias_semana = ("L", "M", "M", "J", "V", "S", "D")
-    meses = (
+    meses_abreviados = (
         "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
         "JUL", "AGO", "SEP", "OCT", "NOV", "DIC",
     )
-    azul_fin_semana = "#4F92BD"
-    etiquetas_dias = []
-    for dia in dias:
-        if dia.weekday() >= 5:
-            etiqueta = (
-                f"<span style='color:{azul_fin_semana}'><b>{dia.day}<br>"
-                f"{dias_semana[dia.weekday()]}</b></span>"
-            )
-        else:
-            etiqueta = f"{dia.day}<br>{dias_semana[dia.weekday()]}"
+    meses_completos = (
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre",
+        "Diciembre",
+    )
+    cantidad_meses = (
+        (fecha_fin.year - fecha_inicio.year) * 12
+        + fecha_fin.month
+        - fecha_inicio.month
+        + 1
+    )
 
-        if dia.day == 1:
-            etiqueta += (
-                f"<br><span style='color:{COBRE}'><b>"
-                f"{meses[dia.month - 1]}</b></span>"
-            )
-        etiquetas_dias.append(etiqueta)
+    if cantidad_meses >= 3:
+        inicios_meses = pd.date_range(
+            fecha_inicio.to_period("M").start_time,
+            fecha_fin,
+            freq="MS",
+        )
+        marcas_eje_x = []
+        etiquetas_eje_x = []
+        for posicion, inicio_mes in enumerate(inicios_meses):
+            fin_mes = inicio_mes + pd.offsets.MonthEnd(0)
+            inicio_visible = max(inicio_mes, fecha_inicio)
+            fin_visible = min(fin_mes, fecha_fin)
+            marca = inicio_visible + (fin_visible - inicio_visible) / 2
+            etiqueta = meses_completos[inicio_mes.month - 1]
+            if posicion == 0 or inicio_mes.month == 1:
+                etiqueta += (
+                    f"<br><span style='color:{COBRE}'><b>"
+                    f"{inicio_mes.year}</b></span>"
+                )
+            marcas_eje_x.append(marca)
+            etiquetas_eje_x.append(etiqueta)
+    else:
+        azul_fin_semana = "#4F92BD"
+        marcas_eje_x = dias
+        etiquetas_eje_x = []
+        for dia in dias:
+            if dia.weekday() >= 5:
+                etiqueta = (
+                    f"<span style='color:{azul_fin_semana}'><b>{dia.day}<br>"
+                    f"{dias_semana[dia.weekday()]}</b></span>"
+                )
+            else:
+                etiqueta = f"{dia.day}<br>{dias_semana[dia.weekday()]}"
+
+            if dia.day == 1:
+                etiqueta += (
+                    f"<br><span style='color:{COBRE}'><b>"
+                    f"{meses_abreviados[dia.month - 1]}</b></span>"
+                )
+            etiquetas_eje_x.append(etiqueta)
 
     fig.update_xaxes(
         range=[
@@ -542,8 +577,8 @@ def mostrar_dashboard_area(nombre_area, titulo):
             fecha_fin + margen_lateral,
         ],
         tickmode="array",
-        tickvals=dias,
-        ticktext=etiquetas_dias,
+        tickvals=marcas_eje_x,
+        ticktext=etiquetas_eje_x,
         tickangle=0,
         fixedrange=True,
         automargin=True,
