@@ -23,11 +23,11 @@ LINEA_SUAVE = "rgba(117,110,103,0.16)"
 
 def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     oscuro = tema_oscuro()
-    tinta = "#F4F0E9" if oscuro else "#282422"
-    texto_eje = "#C8BDB3" if oscuro else "#5F5852"
-    texto_secundario = "#B9AFA5" if oscuro else "#756E67"
-    linea_eje = "rgba(244,240,233,0.22)" if oscuro else "rgba(117,110,103,0.28)"
-    cuadricula = "rgba(244,240,233,0.10)" if oscuro else LINEA_SUAVE
+    tinta = "#F4F0E9" if oscuro else "#12100F"
+    texto_eje = "#C8BDB3" if oscuro else "#332E2A"
+    texto_secundario = "#B9AFA5" if oscuro else "#514A44"
+    linea_eje = "rgba(244,240,233,0.22)" if oscuro else "rgba(23,21,20,0.46)"
+    cuadricula = "rgba(244,240,233,0.10)" if oscuro else "rgba(23,21,20,0.14)"
     vino = "#C65C6B" if oscuro else VINO
     vino_oscuro = "#7A2634" if oscuro else VINO_OSCURO
     cobre = "#D99A68" if oscuro else COBRE
@@ -305,7 +305,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
     dias = pd.date_range(fecha_inicio, fecha_fin, freq="D")
     margen_lateral = pd.Timedelta(hours=12)
     dias_semana = ("L", "M", "M", "J", "V", "S", "D")
-    azul_fin_semana = "#72B7E3" if tema_oscuro() else "#2F6F9F"
+    azul_fin_semana = "#72B7E3" if tema_oscuro() else "#1E5678"
     etiquetas_dias = [
         (
             f"<span style='color:{azul_fin_semana}'><b>{dia.day}<br>"
@@ -339,7 +339,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
                 fig,
                 width="stretch",
                 config=CONFIGURACION_GRAFICO,
-                theme="streamlit",
+                theme="streamlit" if tema_oscuro() else None,
             )
 
     st.subheader("Registros mostrados")
