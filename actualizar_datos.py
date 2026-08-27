@@ -31,7 +31,7 @@ CARPETA_GENERADOS = RAIZ_PROYECTO / "datos_generados"
 BASE_DATOS = CARPETA_GENERADOS / "riles.db"
 BASE_DATOS_TEMPORAL = CARPETA_GENERADOS / "riles_temporal.db"
 BASE_DATOS_ANTERIOR = CARPETA_GENERADOS / "riles_anterior.db"
-VERSION_ESQUEMA = 4
+VERSION_ESQUEMA = 5
 
 SALIDA_FISICO_QUIMICO = CARPETA_GENERADOS / "fisico_quimico.xlsx"
 SALIDA_ANALISIS_AEROBICO = CARPETA_GENERADOS / "analisis_planta_aerobica.xlsx"
@@ -254,6 +254,8 @@ def construir_sqlite(
                 ON mediciones (Area, Punto, Turno, TipoDato);
             CREATE INDEX idx_mediciones_parametro_fecha
                 ON mediciones (Parametro, Fecha);
+            CREATE INDEX idx_mediciones_dashboard
+                ON mediciones (Area, Punto, Parametro, Fecha);
             CREATE INDEX idx_mediciones_consulta
                 ON mediciones (Area, Punto, Turno, TipoDato, Parametro, Fecha);
             """
