@@ -80,18 +80,25 @@ TIPO_TENDENCIA_RECOMENDADA = {
 # Referencias NCh 1333 para uso de agua de riego. Boro se presenta con el
 # valor conservador para cultivos sensibles; puede ajustarse según el cultivo.
 BANDAS_NCH1333_RIEGO = {
-    "pH": {"inferior": 5.5, "superior": 9.0, "etiqueta": "NCh 1333 · pH 5,5–9,0"},
-    "Conductividad": {"superior": 0.75, "etiqueta": "NCh 1333 · CE 0,75 mS/cm"},
-    "Conductividad [mS]": {"superior": 0.75, "etiqueta": "NCh 1333 · CE 0,75 mS/cm"},
-    "Sulfato": {"superior": 250.0, "etiqueta": "NCh 1333 · Sulfato 250 mg/L"},
-    "Boro total": {"superior": 0.75, "etiqueta": "NCh 1333 · Boro 0,75 mg/L"},
-    "Sólidos disueltos": {"superior": 500.0, "etiqueta": "NCh 1333 · Sólidos disueltos 500 mg/L"},
-    "Cloruro": {"superior": 200.0, "etiqueta": "NCh 1333 · Cloruro 200 mg/L"},
+    "pH": {"inferior": 5.5, "superior": 9.0, "etiqueta": "Límite NCh 1333 · pH 5,5–9,0"},
+    "Conductividad": {"superior": 0.75, "etiqueta": "Límite NCh 1333 · CE ≤ 0,75 mS/cm"},
+    "Conductividad [mS]": {"superior": 0.75, "etiqueta": "Límite NCh 1333 · CE ≤ 0,75 mS/cm"},
+    "Sulfato": {"superior": 250.0, "etiqueta": "Límite NCh 1333 · Sulfato ≤ 250 mg/L"},
+    "Boro total": {"superior": 0.75, "etiqueta": "Límite NCh 1333 · Boro ≤ 0,75 mg/L"},
+    "Sólidos disueltos": {"superior": 500.0, "etiqueta": "Límite NCh 1333 · Sólidos disueltos ≤ 500 mg/L"},
+    "Cloruro": {"superior": 200.0, "etiqueta": "Límite NCh 1333 · Cloruro ≤ 200 mg/L"},
 }
 
 
 def obtener_banda_normativa(parametro):
     return BANDAS_NCH1333_RIEGO.get(parametro)
+
+
+def tipo_grafico_recomendado(parametro):
+    """Usa barras para acumulados y líneas para mediciones de calidad."""
+    if parametro in PARAMETROS_ACUMULATIVOS:
+        return "Barras"
+    return TIPO_GRAFICO_RECOMENDADO.get(parametro, "Líneas")
 
 
 def metodo_tendencia_recomendado(parametro, unidad):
@@ -218,8 +225,11 @@ def agregar_bandas(fig, parametro, limites_internos=None):
             if limite_inferior_norma is None:
                 opciones_linea.update(
                     annotation_text=normativa["etiqueta"],
-                    annotation_position="top right",
+                    annotation_position="bottom left",
                     annotation_font=dict(color="#4F9A75", size=12),
+                    annotation_bgcolor="rgba(247,249,252,0.94)",
+                    annotation_bordercolor="rgba(79,154,117,0.45)",
+                    annotation_borderpad=4,
                 )
             fig.add_hline(**opciones_linea)
 
@@ -585,7 +595,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
     # Así el informe respeta área, punto, parámetro y fechas visibles.
     st.session_state["datos_para_impresion"] = datos_filtrados.copy()
 
-    tipo_recomendado = TIPO_GRAFICO_RECOMENDADO.get(parametro, "Barras")
+    tipo_recomendado = tipo_grafico_recomendado(parametro)
     clave_tipo = f"tipo_grafico_{clave_contexto}"
     clave_parametro_tipo = f"parametro_tipo_grafico_{clave_contexto}"
     if st.session_state.get(clave_parametro_tipo) != parametro:
