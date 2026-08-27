@@ -26,7 +26,7 @@ def aplicar_identidad_volta():
         """
         <style>
           [data-testid="stAppViewContainer"] { background: #F7F9FC; }
-          [data-testid="stSidebar"] { background: #40566C; }
+          [data-testid="stSidebar"] { background: #263B70; }
           [data-testid="stSidebar"] h1,
           [data-testid="stSidebar"] h2,
           [data-testid="stSidebar"] h3,
@@ -35,23 +35,23 @@ def aplicar_identidad_volta():
           [data-testid="stSidebar"] [data-baseweb="radio"] > div {
             border-color: rgba(255,255,255,.28);
           }
+          [data-testid="stSidebar"] [role="radiogroup"] label {
+            background: #1F315D;
+            border: 1px solid rgba(255,255,255,.14);
+            border-radius: 7px;
+            margin: 4px 0;
+            padding: 8px 10px;
+          }
+          [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
+            background: #147EAF;
+            border-color: #67C5E8;
+            box-shadow: 0 2px 7px rgba(0,0,0,.18);
+          }
           [data-testid="stSidebar"] [data-baseweb="radio"] [aria-checked="true"] {
             color: #67C5E8 !important;
             font-weight: 700;
           }
-          [data-testid="stSidebar"] [data-baseweb="select"] > div,
-          [data-testid="stSidebar"] [data-baseweb="select"] > div:hover {
-            background: #EAF0F6 !important;
-            border-color: #C8D6E3 !important;
-            color: #263B70 !important;
-          }
-          [data-testid="stSidebar"] [data-baseweb="select"] input,
-          [data-testid="stSidebar"] [data-baseweb="select"] span,
-          [data-testid="stSidebar"] [data-baseweb="select"] svg {
-            color: #263B70 !important;
-            fill: #263B70 !important;
-          }
-          [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,.24); }
+          [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,.22); }
           h1, h2, h3 { color: #263B70 !important; letter-spacing: -.02em; }
           [data-testid="stMetric"] {
             background: #FFFFFF;
