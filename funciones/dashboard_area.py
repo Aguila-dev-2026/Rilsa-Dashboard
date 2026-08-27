@@ -72,7 +72,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
     margen_lateral = pd.Timedelta(hours=12)
     dias_semana = ("L", "M", "X", "J", "V", "S", "D")
     etiquetas_dias = [
-        f"{dias_semana[dia.weekday()]} - {dia.strftime('%d')}"
+        f"{dia.day}<br>{dias_semana[dia.weekday()]}"
         for dia in dias
     ]
 
