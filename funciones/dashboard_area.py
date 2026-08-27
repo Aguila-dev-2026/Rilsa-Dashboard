@@ -45,6 +45,21 @@ TIPO_GRAFICO_RECOMENDADO = {
     "Turbidez": "Líneas",
 }
 
+# Los acumulativos se suman por mes. Todos los demás parámetros activos
+# se resumen mediante promedio mensual.
+PARAMETROS_ACUMULATIVOS = {
+    "Ingresos [Ton]",
+    "Consumo P. Catiónico [kg]",
+    "Consumo P. Aniónico [kg]",
+    "Consumo PAC [kg]",
+    "Consumo Cal [kg]",
+    "Energía eléctrica consumida",
+    "Descarga a Reactor N°1",
+    "Carga DBO5",
+    "Carga de nitrógeno total",
+    "Carga de fósforo total",
+}
+
 TIPO_TENDENCIA_RECOMENDADA = {
     "Ingresos [Ton]": "EWMA adaptativa",
     "Consumo P. Catiónico [kg]": "EWMA adaptativa",
@@ -262,9 +277,9 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         automargin=True,
     )
 
-def mostrar_grafico_desplazable(fig, cantidad_dias):
-    """Replica el tema nativo y añade scroll únicamente desde el día 32."""
-    ancho_grafico = cantidad_dias * 48
+def mostrar_grafico_desplazable(fig, cantidad_periodos):
+    """Replica el tema nativo y añade scroll desde el período visible 32."""
+    ancho_grafico = cantidad_periodos * 48
     oscuro = tema_nativo_oscuro()
     texto = "#FAFAFA" if oscuro else "#171514"
     texto_eje = "#C8CBD4" if oscuro else "#332E2A"
@@ -457,18 +472,62 @@ def mostrar_dashboard_area(nombre_area, titulo):
         f"{datos_filtrados['Valor'].iloc[-1]:.2f} {unidad}".strip(),
     )
 
-    datos_serie = (
-        datos_filtrados.groupby("Fecha", as_index=False, sort=True)["Valor"]
+    # Primero se consolida cada día para que las mediciones Mañana/Tarde
+    # no se dupliquen al construir un total mensual.
+    datos_para_serie = datos_filtrados
+    if tipo_grafico == "Líneas":
+        datos_para_serie = datos_para_serie[
+            datos_para_serie["Valor"].notna()
+            & datos_para_serie["Valor"].ne(0)
+        ]
+
+    datos_diarios = (
+        datos_para_serie.groupby("Fecha", as_index=False, sort=True)["Valor"]
         .mean()
     )
     fecha_inicio = pd.Timestamp(fecha_inicio_seleccionada).normalize()
     fecha_fin = pd.Timestamp(fecha_fin_seleccionada).normalize()
     dias = pd.date_range(fecha_inicio, fecha_fin, freq="D")
+    cantidad_meses = (
+        (fecha_fin.year - fecha_inicio.year) * 12
+        + fecha_fin.month
+        - fecha_inicio.month
+        + 1
+    )
+    resumen_mensual = cantidad_meses >= 3
 
-    # Si el contexto contiene más de una medición diaria, el gráfico usa su
-    # promedio diario; la tabla conserva cada registro original.
+    if resumen_mensual:
+        fechas_grafico = pd.date_range(
+            fecha_inicio.to_period("M").start_time,
+            fecha_fin.to_period("M").start_time,
+            freq="MS",
+        )
+        datos_mensuales = datos_diarios.copy()
+        datos_mensuales["Fecha"] = (
+            datos_mensuales["Fecha"].dt.to_period("M").dt.to_timestamp()
+        )
+
+        if parametro in PARAMETROS_ACUMULATIVOS:
+            datos_serie = (
+                datos_mensuales.groupby("Fecha", as_index=False, sort=True)["Valor"]
+                .sum(min_count=1)
+            )
+            metodo_resumen = "acumulado mensual"
+        else:
+            datos_serie = (
+                datos_mensuales.groupby("Fecha", as_index=False, sort=True)["Valor"]
+                .mean()
+            )
+            metodo_resumen = "promedio mensual"
+
+        st.sidebar.caption(f"Resumen temporal: {metodo_resumen}.")
+    else:
+        fechas_grafico = dias
+        datos_serie = datos_diarios
+
+    # La tabla conserva cada registro original; solo la serie gráfica se resume.
     datos_grafico = (
-        pd.DataFrame({"Fecha": dias})
+        pd.DataFrame({"Fecha": fechas_grafico})
         .merge(
             datos_serie[["Fecha", "Valor"]],
             on="Fecha",
@@ -512,7 +571,6 @@ def mostrar_dashboard_area(nombre_area, titulo):
         )
         st.sidebar.caption(f"Tendencia automática: {metodo_tendencia}.")
 
-    margen_lateral = pd.Timedelta(hours=12)
     dias_semana = ("L", "M", "M", "J", "V", "S", "D")
     meses_abreviados = (
         "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
@@ -523,35 +581,24 @@ def mostrar_dashboard_area(nombre_area, titulo):
         "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre",
         "Diciembre",
     )
-    cantidad_meses = (
-        (fecha_fin.year - fecha_inicio.year) * 12
-        + fecha_fin.month
-        - fecha_inicio.month
-        + 1
-    )
-
-    if cantidad_meses >= 3:
-        inicios_meses = pd.date_range(
-            fecha_inicio.to_period("M").start_time,
-            fecha_fin,
-            freq="MS",
-        )
-        marcas_eje_x = []
+    if resumen_mensual:
+        margen_lateral = pd.Timedelta(days=16)
+        inicio_eje = fechas_grafico[0]
+        fin_eje = fechas_grafico[-1]
+        marcas_eje_x = fechas_grafico
         etiquetas_eje_x = []
-        for posicion, inicio_mes in enumerate(inicios_meses):
-            fin_mes = inicio_mes + pd.offsets.MonthEnd(0)
-            inicio_visible = max(inicio_mes, fecha_inicio)
-            fin_visible = min(fin_mes, fecha_fin)
-            marca = inicio_visible + (fin_visible - inicio_visible) / 2
+        for posicion, inicio_mes in enumerate(fechas_grafico):
             etiqueta = meses_completos[inicio_mes.month - 1]
             if posicion == 0 or inicio_mes.month == 1:
                 etiqueta += (
                     f"<br><span style='color:{COBRE}'><b>"
                     f"{inicio_mes.year}</b></span>"
                 )
-            marcas_eje_x.append(marca)
             etiquetas_eje_x.append(etiqueta)
     else:
+        margen_lateral = pd.Timedelta(hours=12)
+        inicio_eje = fecha_inicio
+        fin_eje = fecha_fin
         azul_fin_semana = "#4F92BD"
         marcas_eje_x = dias
         etiquetas_eje_x = []
@@ -573,8 +620,8 @@ def mostrar_dashboard_area(nombre_area, titulo):
 
     fig.update_xaxes(
         range=[
-            fecha_inicio - margen_lateral,
-            fecha_fin + margen_lateral,
+            inicio_eje - margen_lateral,
+            fin_eje + margen_lateral,
         ],
         tickmode="array",
         tickvals=marcas_eje_x,
@@ -586,8 +633,8 @@ def mostrar_dashboard_area(nombre_area, titulo):
     fig.update_yaxes(fixedrange=True)
 
     with st.container(border=True):
-        if len(dias) > 31:
-            mostrar_grafico_desplazable(fig, len(dias))
+        if len(fechas_grafico) > 31:
+            mostrar_grafico_desplazable(fig, len(fechas_grafico))
         else:
             st.plotly_chart(
                 fig,
