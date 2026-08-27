@@ -31,7 +31,7 @@ CARPETA_GENERADOS = RAIZ_PROYECTO / "datos_generados"
 BASE_DATOS = CARPETA_GENERADOS / "riles.db"
 BASE_DATOS_TEMPORAL = CARPETA_GENERADOS / "riles_temporal.db"
 BASE_DATOS_ANTERIOR = CARPETA_GENERADOS / "riles_anterior.db"
-VERSION_ESQUEMA = 1
+VERSION_ESQUEMA = 2
 
 SALIDA_FISICO_QUIMICO = CARPETA_GENERADOS / "fisico_quimico.xlsx"
 SALIDA_ANALISIS_AEROBICO = CARPETA_GENERADOS / "analisis_planta_aerobica.xlsx"
@@ -172,6 +172,13 @@ def conteos_base(ruta: Path) -> dict[str, int]:
         return {}
     try:
         with sqlite3.connect(ruta) as conexion:
+            version = conexion.execute(
+                "SELECT Valor FROM metadata_sistema "
+                "WHERE Clave = 'version_esquema'"
+            ).fetchone()
+            if not version or int(version[0]) != VERSION_ESQUEMA:
+                return {}
+
             return {
                 area: int(cantidad)
                 for area, cantidad in conexion.execute(
