@@ -1,89 +1,148 @@
-import os
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 
 
-@st.cache_data(show_spinner="Cargando datos generados...")
-def cargar_datos_operacionales():
-    archivos = [
-        "datos_generados/fisico_quimico.xlsx",
-        "datos_generados/aerobico.xlsx"
-    ]
+RAIZ_PROYECTO = Path(__file__).resolve().parents[1]
+CARPETA_GENERADOS = RAIZ_PROYECTO / "datos_generados"
 
-    dataframes = []
+ARCHIVOS_OPERACIONALES = (
+    "fisico_quimico.xlsx",
+    "aerobico.xlsx",
+    "planta_baja.xlsx",
+    "laboratorio.xlsx",
+)
 
-    for archivo in archivos:
-        if os.path.exists(archivo):
-            df = pd.read_excel(archivo)
-            dataframes.append(df)
+COLUMNAS_LARGAS = {"Fecha", "Area", "Parametro", "Valor", "Unidad"}
 
-    if not dataframes:
-        st.error("No existen archivos generados. Ejecuta primero: python importar.py")
+
+@st.cache_data(show_spinner=False, max_entries=32)
+def _leer_excel_cacheado(ruta, mtime_ns, tamano):
+    """Cachea cada versión física del archivo, no solo el nombre de la función."""
+    del mtime_ns, tamano
+    return pd.read_excel(ruta)
+
+
+def _leer_excel(ruta):
+    estado = ruta.stat()
+    return _leer_excel_cacheado(str(ruta), estado.st_mtime_ns, estado.st_size)
+
+
+def _detener_por_archivo(ruta):
+    st.error(f"No existe {ruta.relative_to(RAIZ_PROYECTO)}. Actualiza los datos desde Excel.")
+    st.stop()
+
+
+def _validar_columnas(datos, columnas, ruta):
+    faltantes = set(columnas).difference(datos.columns)
+
+    if faltantes:
+        nombres = ", ".join(sorted(faltantes))
+        st.error(
+            f"{ruta.name} no tiene las columnas requeridas: {nombres}. "
+            "Vuelve a actualizar los datos desde Excel."
+        )
         st.stop()
 
-    datos = pd.concat(dataframes, ignore_index=True)
 
+def _normalizar_datos_largos(datos):
+    datos = datos.copy()
     datos["Fecha"] = pd.to_datetime(datos["Fecha"], errors="coerce")
     datos["Valor"] = pd.to_numeric(datos["Valor"], errors="coerce")
-
-    datos = datos.dropna(subset=["Fecha", "Valor"])
-
-    return datos
+    datos = datos.dropna(subset=["Fecha", "Valor", "Area", "Parametro"])
+    return datos.sort_values(["Fecha", "Area", "Parametro"]).reset_index(drop=True)
 
 
-@st.cache_data(show_spinner="Cargando datos de químicos...")
-def cargar_datos_quimicos():
-    archivo = "datos_generados/quimicos.xlsx"
+def _cargar_archivo_largo(nombre):
+    ruta = CARPETA_GENERADOS / nombre
 
-    if not os.path.exists(archivo):
-        st.error("No existe quimicos.xlsx. Ejecuta primero: python importar.py")
+    if not ruta.exists():
+        _detener_por_archivo(ruta)
+
+    datos = _leer_excel(ruta)
+    _validar_columnas(datos, COLUMNAS_LARGAS, ruta)
+    return _normalizar_datos_largos(datos)
+
+
+def cargar_datos_operacionales():
+    dataframes = []
+
+    for nombre in ARCHIVOS_OPERACIONALES:
+        ruta = CARPETA_GENERADOS / nombre
+
+        if not ruta.exists():
+            continue
+
+        datos = _leer_excel(ruta)
+        _validar_columnas(datos, COLUMNAS_LARGAS, ruta)
+        dataframes.append(datos)
+
+    if not dataframes:
+        st.error("No existen archivos generados. Actualiza los datos desde Excel.")
         st.stop()
 
-    datos = pd.read_excel(archivo)
+    return _normalizar_datos_largos(
+        pd.concat(dataframes, ignore_index=True, sort=False)
+    )
+
+
+def cargar_datos_laboratorio():
+    return _cargar_archivo_largo("laboratorio.xlsx")
+
+
+def cargar_datos_quimicos():
+    ruta = CARPETA_GENERADOS / "quimicos.xlsx"
+
+    if not ruta.exists():
+        _detener_por_archivo(ruta)
+
+    datos = _leer_excel(ruta)
+    columnas = {"Fecha", "Mes", "Dia", "Catiónico", "Aniónico", "PAC", "Cal"}
+    _validar_columnas(datos, columnas, ruta)
 
     datos["Fecha"] = pd.to_datetime(datos["Fecha"], errors="coerce")
 
     for columna in ["Catiónico", "Aniónico", "PAC", "Cal"]:
         datos[columna] = pd.to_numeric(datos[columna], errors="coerce")
 
-    datos = datos.dropna(subset=["Fecha"])
+    return datos.dropna(subset=["Fecha"]).sort_values("Fecha").reset_index(drop=True)
 
-    return datos
 
-@st.cache_data(show_spinner="Cargando datos de energía...")
 def cargar_datos_energia():
-    archivo = "datos_generados/energia.xlsx"
+    ruta = CARPETA_GENERADOS / "energia.xlsx"
 
-    if not os.path.exists(archivo):
-        st.error("No existe energia.xlsx. Ejecuta primero: python importar.py")
-        st.stop()
+    if not ruta.exists():
+        _detener_por_archivo(ruta)
 
-    datos = pd.read_excel(archivo)
+    datos = _leer_excel(ruta)
+    columnas = {"Fecha", "Mes", "Dia", "M3", "KWH", "KWH_por_M3"}
+    _validar_columnas(datos, columnas, ruta)
 
     datos["Fecha"] = pd.to_datetime(datos["Fecha"], errors="coerce")
 
     for columna in ["M3", "KWH", "KWH_por_M3"]:
         datos[columna] = pd.to_numeric(datos[columna], errors="coerce")
 
-    datos = datos.dropna(subset=["Fecha"])
+    return datos.dropna(subset=["Fecha"]).sort_values("Fecha").reset_index(drop=True)
 
-    return datos
 
-@st.cache_data(show_spinner="Cargando datos de contenedores...")
 def cargar_datos_contenedores():
-    archivo = "datos_generados/contenedores.xlsx"
+    ruta = CARPETA_GENERADOS / "contenedores.xlsx"
 
-    if not os.path.exists(archivo):
-        st.error(
-            "No existe contenedores.xlsx. Ejecuta primero: python importar.py"
-        )
-        st.stop()
+    if not ruta.exists():
+        _detener_por_archivo(ruta)
 
-    datos = pd.read_excel(archivo)
-
-    datos["Fecha"] = pd.to_datetime(
-        datos["Fecha"],
-        errors="coerce"
-    )
-
-    return datos
+    datos = _leer_excel(ruta)
+    columnas = {
+        "Fecha",
+        "Mes",
+        "Dia",
+        "Basura_Retiro",
+        "Basura_Destino",
+        "Lodos_Retiro",
+        "Lodos_Destino",
+    }
+    _validar_columnas(datos, columnas, ruta)
+    datos["Fecha"] = pd.to_datetime(datos["Fecha"], errors="coerce")
+    return datos.dropna(subset=["Fecha"]).sort_values("Fecha").reset_index(drop=True)
