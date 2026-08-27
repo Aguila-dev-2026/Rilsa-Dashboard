@@ -3,17 +3,12 @@ import sqlite3
 
 import streamlit as st
 
-from dashboards.fisico_quimico import mostrar_fisico_quimico
-from funciones.cargar_datos import CARPETA_GENERADOS
-from funciones.dashboard_area import mostrar_dashboard_area
-from actualizar_datos import (
-    BASE_DATOS,
-    ENTRADA_ANALISIS_AEROBICO,
-    ENTRADA_FISICO_QUIMICO,
-    actualizar_datos,
-)
-
-
+RAIZ_PROYECTO = Path(__file__).resolve().parent
+CARPETA_GENERADOS = RAIZ_PROYECTO / "datos_generados"
+CARPETA_DATOS = RAIZ_PROYECTO / "datos"
+BASE_DATOS = CARPETA_GENERADOS / "riles.db"
+ENTRADA_FISICO_QUIMICO = CARPETA_DATOS / "Planilla Procesos RILES.xlsx"
+ENTRADA_ANALISIS_AEROBICO = CARPETA_DATOS / "Análisis Planta Aeróbica.xlsx"
 ARCHIVO_FISICO_QUIMICO = CARPETA_GENERADOS / "fisico_quimico.xlsx"
 ARCHIVO_ANALISIS_AEROBICO = CARPETA_GENERADOS / "analisis_planta_aerobica.xlsx"
 
@@ -46,6 +41,9 @@ if mensaje_actualizacion:
 if st.sidebar.button("Actualizar desde planillas", type="primary", use_container_width=True):
     try:
         with st.spinner("Validando y actualizando los datos..."):
+            # OpenPyXL y los importadores se cargan solo cuando se solicitan.
+            from actualizar_datos import actualizar_datos
+
             resultado = actualizar_datos()
     except (FileNotFoundError, ValueError, OSError, sqlite3.DatabaseError) as error:
         st.sidebar.error(f"No fue posible actualizar los datos: {error}")
@@ -84,6 +82,8 @@ if pagina == "⚗️ Físico-químico":
             "en la barra lateral."
         )
     else:
+        from dashboards.fisico_quimico import mostrar_fisico_quimico
+
         mostrar_fisico_quimico()
 else:
     nombre_area, titulo = SECCIONES[pagina]
@@ -94,4 +94,6 @@ else:
             "Usa «Actualizar desde planillas» en la barra lateral."
         )
     else:
+        from funciones.dashboard_area import mostrar_dashboard_area
+
         mostrar_dashboard_area(nombre_area=nombre_area, titulo=titulo)
