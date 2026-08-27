@@ -832,19 +832,14 @@ def mostrar_dashboard_area(nombre_area, titulo):
         "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
         "JUL", "AGO", "SEP", "OCT", "NOV", "DIC",
     )
-    meses_completos = (
-        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre",
-        "Diciembre",
-    )
     if resumen_mensual:
-        margen_lateral = pd.Timedelta(days=16)
+        margen_lateral = pd.Timedelta(days=12)
         inicio_eje = fechas_grafico[0]
         fin_eje = fechas_grafico[-1]
         marcas_eje_x = fechas_grafico
         etiquetas_eje_x = []
         for posicion, inicio_mes in enumerate(fechas_grafico):
-            etiqueta = meses_completos[inicio_mes.month - 1]
+            etiqueta = meses_abreviados[inicio_mes.month - 1][0]
             if posicion == 0 or inicio_mes.month == 1:
                 etiqueta += (
                     f"<br><span style='color:{COBRE}'><b>"
@@ -889,15 +884,12 @@ def mostrar_dashboard_area(nombre_area, titulo):
     fig.update_yaxes(fixedrange=True)
 
     with st.container(border=True):
-        if len(fechas_grafico) > 31:
-            mostrar_grafico_desplazable(fig, len(fechas_grafico))
-        else:
-            st.plotly_chart(
-                fig,
-                width="stretch",
-                config=CONFIGURACION_GRAFICO,
-                theme="streamlit",
-            )
+        st.plotly_chart(
+            fig,
+            width="stretch",
+            config=CONFIGURACION_GRAFICO,
+            theme="streamlit",
+        )
 
     st.markdown(
         "<h3 class='riles-tabla-titulo'>Registros mostrados</h3>",
