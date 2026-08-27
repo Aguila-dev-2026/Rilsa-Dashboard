@@ -70,7 +70,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
     fecha_fin = datos_filtrados["Fecha"].max().normalize()
     dias = pd.date_range(fecha_inicio, fecha_fin, freq="D")
     margen_lateral = pd.Timedelta(hours=12)
-    dias_semana = ("L", "M", "X", "J", "V", "S", "D")
+    dias_semana = ("L", "M", "M", "J", "V", "S", "D")
     etiquetas_dias = [
         f"{dia.day}<br>{dias_semana[dia.weekday()]}"
         for dia in dias
