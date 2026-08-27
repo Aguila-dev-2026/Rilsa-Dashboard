@@ -25,27 +25,46 @@ def mostrar_dashboard_area(nombre_area, titulo):
         st.info("No hay datos para el parámetro seleccionado.")
         return
 
+    tipo_grafico = st.sidebar.selectbox(
+        "Tipo de gráfico",
+        ["Líneas", "Barras"],
+        key="tipo_grafico",
+    )
+
+    datos_filtrados = datos_filtrados.sort_values("Fecha")
     parametro = datos_filtrados["Parametro"].iat[0]
-    unidad = datos_filtrados["Unidad"].dropna().iloc[0] if datos_filtrados["Unidad"].notna().any() else ""
+    unidad = (
+        datos_filtrados["Unidad"].dropna().iloc[0]
+        if datos_filtrados["Unidad"].notna().any()
+        else ""
+    )
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Registros", len(datos_filtrados))
     col2.metric("Promedio", f"{datos_filtrados['Valor'].mean():.2f} {unidad}".strip())
-    col3.metric("Último valor", f"{datos_filtrados['Valor'].iloc[-1]:.2f} {unidad}".strip())
-
-    fig = px.line(
-        datos_filtrados,
-        x="Fecha",
-        y="Valor",
-        markers=True,
-        template="plotly_white",
-        title=f"{parametro} — evolución en el período seleccionado",
-        labels={
-            "Fecha": "Fecha",
-            "Valor": f"Valor ({unidad})" if unidad else "Valor"
-        }
+    col3.metric(
+        "Último valor",
+        f"{datos_filtrados['Valor'].iloc[-1]:.2f} {unidad}".strip(),
     )
-    fig.update_traces(line_width=3, marker_size=7)
+
+    opciones = {
+        "x": "Fecha",
+        "y": "Valor",
+        "template": "plotly_white",
+        "title": f"{parametro} — evolución en el período seleccionado",
+        "labels": {
+            "Fecha": "Fecha",
+            "Valor": f"Valor ({unidad})" if unidad else "Valor",
+        },
+    }
+
+    if tipo_grafico == "Barras":
+        fig = px.bar(datos_filtrados, **opciones)
+        fig.update_traces(marker_color="#6d1f2b")
+    else:
+        fig = px.line(datos_filtrados, markers=True, **opciones)
+        fig.update_traces(line_width=3, marker_size=7)
+
     fig.update_layout(hovermode="x unified", margin=dict(l=10, r=10, t=55, b=10))
 
     st.plotly_chart(fig, width="stretch")
@@ -53,5 +72,5 @@ def mostrar_dashboard_area(nombre_area, titulo):
     st.dataframe(
         datos_filtrados.sort_values("Fecha", ascending=False),
         width="stretch",
-        hide_index=True
+        hide_index=True,
     )
