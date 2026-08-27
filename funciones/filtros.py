@@ -1,8 +1,8 @@
 import streamlit as st
 
 
-# Orden operativo deducido para la sección físico-química:
-# ingreso -> estanque y caracterización -> tratamiento químico -> lodos -> energía.
+# Orden operativo: parámetros físico-químicos actuales y luego variables de
+# laboratorio/proceso del nuevo historial.
 ORDEN_PARAMETROS_PROCESO = [
     "Ingresos [Ton]",
     "Volumen TK3 [m3]",
@@ -17,10 +17,67 @@ ORDEN_PARAMETROS_PROCESO = [
     "% Humedad Lodo 1",
     "% Humedad Lodo 2",
     "Energía eléctrica consumida",
+    "DQO",
+    "DBO estimada",
+    "DQO TK2",
+    "DQO clarificado",
+    "Remoción DQO",
+    "Temperatura",
+    "Conductividad",
+    "Color aparente",
+    "Turbidez",
+    "Sulfato",
+    "Boro total",
+    "Cloruro",
+    "Cloro libre",
+    "Nitrógeno total",
+    "NH3",
+    "NO3-",
+    "Nitrógeno",
+    "Fósforo total",
+    "PO4-3",
+    "P2O5",
+    "SST",
+    "SSV",
+    "SSF",
+    "Sólidos disueltos",
+    "Sólidos sedimentables 30 min",
+    "Sólidos sedimentables 60 min",
+    "IVL",
+    "Relación SSF/SSV",
+    "Relación C:P",
+    "Relación N:P",
+    "Relación F/M",
+    "Edad del lodo",
+    "Volumen de alimentación",
+    "Descarga a Reactor N°1",
+    "Máxima descarga diaria",
+    "Carga DBO5",
+    "Carga de nitrógeno total",
+    "Carga de fósforo total",
+    "Descarga a riego",
+    "Descarga a infiltración",
 ]
 
+ORDEN_PUNTOS = [
+    "Afluente",
+    "Reactor N°1",
+    "Clarificado Reactor N°1",
+    "Reactor N°2",
+    "Reactor N°3",
+    "Reactor N°4",
+    "Reactor N°5",
+    "Digestor",
+    "Recirculación",
+    "Clarificador Biológico",
+    "Efluente",
+]
 
-def filtrar_por_fecha(datos, columna_fecha="Fecha"):
+ORDEN_TIPOS_DATO = ["Medición", "Cálculo", "Estimación", "Registro"]
+ORDEN_TURNOS = ["Mañana", "Tarde", "Noche", "Sin turno"]
+
+
+def filtrar_por_fecha(datos, columna_fecha="Fecha", clave="general"):
     fecha_min = datos[columna_fecha].min().date()
     fecha_max = datos[columna_fecha].max().date()
 
@@ -30,14 +87,14 @@ def filtrar_por_fecha(datos, columna_fecha="Fecha"):
         value=fecha_min,
         min_value=fecha_min,
         max_value=fecha_max,
-        key="fecha_inicio",
+        key=f"fecha_inicio_{clave}",
     )
     fecha_fin = st.sidebar.date_input(
         "Fecha final",
         value=fecha_max,
         min_value=fecha_min,
         max_value=fecha_max,
-        key="fecha_fin",
+        key=f"fecha_fin_{clave}",
     )
 
     if fecha_inicio > fecha_fin:
@@ -46,14 +103,73 @@ def filtrar_por_fecha(datos, columna_fecha="Fecha"):
 
     filtro = (
         (datos[columna_fecha].dt.date >= fecha_inicio)
-        &
-        (datos[columna_fecha].dt.date <= fecha_fin)
+        & (datos[columna_fecha].dt.date <= fecha_fin)
     )
 
     return datos[filtro].copy()
 
 
-def filtrar_por_parametro(datos, columna_parametro="Parametro"):
+def filtrar_dimension(
+    datos,
+    *,
+    columna,
+    etiqueta,
+    clave,
+    orden_preferido,
+    nombre_vacio=None,
+):
+    if columna not in datos.columns:
+        return datos
+
+    serie = datos[columna].fillna("").astype(str).str.strip()
+    disponibles = set(serie[serie.ne("")].unique())
+    if nombre_vacio and serie.eq("").any():
+        disponibles.add(nombre_vacio)
+
+    if len(disponibles) <= 1:
+        return datos
+
+    opciones = [valor for valor in orden_preferido if valor in disponibles]
+    opciones.extend(sorted(disponibles.difference(opciones)))
+
+    seleccionado = st.sidebar.selectbox(
+        etiqueta,
+        opciones,
+        key=f"selector_{columna.lower()}_{clave}",
+    )
+    if nombre_vacio and seleccionado == nombre_vacio:
+        return datos[serie.eq("")].copy()
+
+    return datos[serie.eq(seleccionado)].copy()
+
+
+def filtrar_contexto_operacional(datos, clave):
+    datos = filtrar_dimension(
+        datos,
+        columna="Punto",
+        etiqueta="Punto de proceso",
+        clave=clave,
+        orden_preferido=ORDEN_PUNTOS,
+    )
+    datos = filtrar_dimension(
+        datos,
+        columna="Turno",
+        etiqueta="Turno o frecuencia",
+        clave=clave,
+        orden_preferido=ORDEN_TURNOS,
+        nombre_vacio="Sin turno",
+    )
+    datos = filtrar_dimension(
+        datos,
+        columna="TipoDato",
+        etiqueta="Tipo de dato",
+        clave=clave,
+        orden_preferido=ORDEN_TIPOS_DATO,
+    )
+    return datos
+
+
+def filtrar_por_parametro(datos, columna_parametro="Parametro", clave="general"):
     disponibles = set(datos[columna_parametro].dropna().unique())
     parametros = [
         parametro
@@ -65,7 +181,7 @@ def filtrar_por_parametro(datos, columna_parametro="Parametro"):
     parametro_seleccionado = st.sidebar.selectbox(
         "Parámetro a visualizar",
         parametros,
-        key="selector_parametro",
+        key=f"selector_parametro_{clave}",
     )
 
     return datos[
