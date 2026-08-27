@@ -176,60 +176,16 @@ def preparar_tabla_premium(datos):
         .reset_index(drop=True)
     )
 
-    modo_oscuro = tema_oscuro()
-
-    if modo_oscuro:
-        fondo_par = "#171514"
-        fondo_impar = "#211D1B"
-        texto = "#F4F0E9"
-        encabezado = "#48121A"
-        borde = "#3A3430"
-        valor = "#D99A68"
-    else:
-        fondo_par = "#FFFDF8"
-        fondo_impar = "#F7F2EC"
-        texto = "#282422"
-        encabezado = VINO_OSCURO
-        borde = "#E5DED5"
-        valor = VINO
-
-    def alternar_filas(fila):
-        fondo = fondo_par if fila.name % 2 == 0 else fondo_impar
-        return [f"background-color: {fondo}; color: {texto}"] * len(fila)
-
+    # Los fondos y encabezados quedan a cargo del tema nativo de Streamlit,
+    # para que cambien de forma fiable entre Light y Dark.
     return (
         tabla.style
-        .apply(alternar_filas, axis=1)
         .set_properties(
             subset=["Valor"],
-            **{
-                "color": valor,
-                "font-weight": "700",
-            },
-        )
-        .set_table_styles(
-            [
-                {
-                    "selector": "th",
-                    "props": [
-                        ("background-color", encabezado),
-                        ("color", "#FFFFFF"),
-                        ("font-weight", "700"),
-                        ("border", "none"),
-                    ],
-                },
-                {
-                    "selector": "td",
-                    "props": [
-                        ("border-color", borde),
-                        ("padding", "0.65rem"),
-                    ],
-                },
-            ]
+            **{"font-weight": "700"},
         )
         .format({"Valor": "{:,.2f}"}, na_rep="—")
     )
-
 
 def mostrar_dashboard_area(nombre_area, titulo):
     st.header(titulo)
