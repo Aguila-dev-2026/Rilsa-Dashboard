@@ -9,6 +9,7 @@ CARPETA_GENERADOS = RAIZ_PROYECTO / "datos_generados"
 
 ARCHIVOS_OPERACIONALES = (
     "fisico_quimico.xlsx",
+    "analisis_planta_aerobica.xlsx",
     "aerobico.xlsx",
     "planta_baja.xlsx",
     "laboratorio.xlsx",
@@ -76,15 +77,29 @@ def cargar_datos_operacionales():
 
         datos = _leer_excel(ruta)
         _validar_columnas(datos, COLUMNAS_LARGAS, ruta)
+        datos["_PrioridadFuente"] = (
+            100 if nombre == "analisis_planta_aerobica.xlsx" else 0
+        )
         dataframes.append(datos)
 
     if not dataframes:
         st.error("No existen archivos generados. Actualiza los datos desde Excel.")
         st.stop()
 
-    return _normalizar_datos_largos(
-        pd.concat(dataframes, ignore_index=True, sort=False)
+    combinados = pd.concat(dataframes, ignore_index=True, sort=False)
+    claves = ["Fecha", "Area", "Parametro"]
+    claves.extend(
+        columna
+        for columna in ("Punto", "Turno")
+        if columna in combinados.columns
     )
+    combinados = (
+        combinados.sort_values("_PrioridadFuente")
+        .drop_duplicates(subset=claves, keep="last")
+        .drop(columns="_PrioridadFuente")
+    )
+
+    return _normalizar_datos_largos(combinados)
 
 
 def cargar_datos_laboratorio():
