@@ -50,19 +50,25 @@ def normalizar_nombre(valor: object) -> str:
 
 
 def convertir_a_numero(serie: pd.Series) -> pd.Series:
-    """Convierte números Excel y texto con coma decimal sin alterar los decimales."""
-    texto = serie.astype("string").str.strip().str.replace("\u00a0", "", regex=False)
-    tiene_coma = texto.str.contains(",", regex=False, na=False)
+    """Convierte números Excel y texto con coma decimal de forma compatible."""
 
-    # Un separador de miles con punto solo se elimina cuando también hay coma
-    # decimal (por ejemplo, 1.234,56).
-    texto.loc[tiene_coma] = (
-        texto.loc[tiene_coma]
-        .str.replace(".", "", regex=False)
-        .str.replace(",", ".", regex=False)
-    )
-    return pd.to_numeric(texto, errors="coerce")
+    def convertir_valor(valor: object) -> float:
+        if pd.isna(valor):
+            return float("nan")
 
+        if isinstance(valor, (int, float)):
+            return float(valor)
+
+        texto = str(valor).strip().replace("\u00a0", "")
+        if "," in texto:
+            texto = texto.replace(".", "").replace(",", ".")
+
+        try:
+            return float(texto)
+        except ValueError:
+            return float("nan")
+
+    return serie.map(convertir_valor).astype("float64")
 
 def unidad_de(parametro: str) -> str:
     coincidencia = re.search(r"\[([^\]]+)\]", parametro)
