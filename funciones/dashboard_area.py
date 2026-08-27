@@ -67,11 +67,10 @@ def mostrar_dashboard_area(nombre_area, titulo):
 
     fig.update_layout(
         hovermode="x unified",
-        dragmode="zoom",
+        dragmode="pan",
         margin=dict(l=10, r=10, t=55, b=10),
     )
-    # El eje Y queda bloqueado: el zoom, la rueda y el arrastre actúan sobre
-    # el eje temporal (X), no alteran la escala de los valores.
+    # El eje Y queda bloqueado: tanto el zoom como Pan actúan sobre el eje\n    # temporal (X), sin alterar la escala de los valores.
     fig.update_xaxes(fixedrange=False)
     fig.update_yaxes(fixedrange=True)
 
@@ -80,7 +79,6 @@ def mostrar_dashboard_area(nombre_area, titulo):
         "scrollZoom": True,
         "modeBarButtonsToRemove": [
             "zoom2d",
-            "pan2d",
             "select2d",
             "lasso2d",
             "autoScale2d",
