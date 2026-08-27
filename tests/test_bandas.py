@@ -16,7 +16,9 @@ class BandasTests(unittest.TestCase):
         self.assertNotIn("add_hrect", funciones["agregar_tendencia"])
         self.assertIn("add_hrect", funciones["agregar_bandas"])
         self.assertIn("#A12C32", funciones["agregar_bandas"])
-        self.assertIn("number_input", funciones["configurar_banda_alerta"])
+        self.assertIn("number_input", funciones["configurar_bandas"])
+        self.assertIn("Añadir banda inferior", funciones["configurar_bandas"])
+        self.assertIn("Añadir banda superior", funciones["configurar_bandas"])
 
 
 if __name__ == "__main__":
