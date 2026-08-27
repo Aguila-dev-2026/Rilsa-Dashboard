@@ -31,7 +31,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     vino = "#C65C6B" if oscuro else VINO
     vino_oscuro = "#7A2634" if oscuro else VINO_OSCURO
     cobre = "#D99A68" if oscuro else COBRE
-    borde_marcador = "#1F1B19" if oscuro else "#FFFDF8"
+    borde_marcador = "#141210" if oscuro else "#FFFDF8"
     relleno = "rgba(198,92,107,0.11)" if oscuro else "rgba(109,31,43,0.07)"
 
     etiqueta_valor = f"%{{y:,.2f}} {unidad}".strip()
@@ -179,11 +179,11 @@ def preparar_tabla_premium(datos):
     modo_oscuro = tema_oscuro()
 
     if modo_oscuro:
-        fondo_par = "#171514"
-        fondo_impar = "#211D1B"
+        fondo_par = "#12100F"
+        fondo_impar = "#181513"
         texto = "#F4F0E9"
-        encabezado = "#48121A"
-        borde = "#3A3430"
+        encabezado = "#3A1118"
+        borde = "#2C2824"
         valor = "#D99A68"
     else:
         fondo_par = "#FFFDF8"
