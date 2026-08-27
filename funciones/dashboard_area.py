@@ -107,13 +107,7 @@ def mostrar_grafico_desplazable(fig, cantidad_dias):
         autosize=False,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(
-            family='"Source Sans Pro", sans-serif',
-            color="#31333F",
-        ),
     )
-    fig.update_xaxes(gridcolor="rgba(49,51,63,0.12)")
-    fig.update_yaxes(gridcolor="rgba(49,51,63,0.12)")
 
     grafico_html = fig.to_html(
         full_html=False,
