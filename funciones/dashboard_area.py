@@ -65,9 +65,28 @@ def mostrar_dashboard_area(nombre_area, titulo):
         fig = px.line(datos_filtrados, markers=True, **opciones)
         fig.update_traces(line_width=3, marker_size=7)
 
-    fig.update_layout(hovermode="x unified", margin=dict(l=10, r=10, t=55, b=10))
+    fig.update_layout(
+        hovermode="x unified",
+        dragmode="zoom",
+        margin=dict(l=10, r=10, t=55, b=10),
+    )
+    # El eje Y queda bloqueado: el zoom, la rueda y el arrastre actúan sobre
+    # el eje temporal (X), no alteran la escala de los valores.
+    fig.update_xaxes(fixedrange=False)
+    fig.update_yaxes(fixedrange=True)
 
-    st.plotly_chart(fig, width="stretch")
+    configuracion_grafico = {
+        "displayModeBar": True,
+        "scrollZoom": True,
+        "modeBarButtonsToRemove": [
+            "zoom2d",
+            "pan2d",
+            "select2d",
+            "lasso2d",
+            "autoScale2d",
+        ],
+    }
+    st.plotly_chart(fig, width="stretch", config=configuracion_grafico)
     st.subheader("Registros mostrados")
     st.dataframe(
         datos_filtrados.sort_values("Fecha", ascending=False),
