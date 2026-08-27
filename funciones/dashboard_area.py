@@ -153,6 +153,59 @@ def mostrar_grafico_desplazable(fig, cantidad_dias):
     components.html(html, height=530, scrolling=False)
 
 
+
+
+
+def preparar_tabla_premium(datos):
+    tabla = (
+        datos.sort_values("Fecha", ascending=False)
+        .rename(
+            columns={
+                "Area": "Área",
+                "Parametro": "Parámetro",
+            }
+        )
+        .reset_index(drop=True)
+    )
+
+    def alternar_filas(fila):
+        fondo = "#FFFDF8" if fila.name % 2 == 0 else "#F7F2EC"
+        return [f"background-color: {fondo}; color: #282422"] * len(fila)
+
+    return (
+        tabla.style
+        .apply(alternar_filas, axis=1)
+        .set_properties(
+            subset=["Valor"],
+            **{
+                "color": VINO,
+                "font-weight": "700",
+            },
+        )
+        .set_table_styles(
+            [
+                {
+                    "selector": "th",
+                    "props": [
+                        ("background-color", VINO_OSCURO),
+                        ("color", "#FFFFFF"),
+                        ("font-weight", "700"),
+                        ("border", "none"),
+                    ],
+                },
+                {
+                    "selector": "td",
+                    "props": [
+                        ("border-color", "#E5DED5"),
+                        ("padding", "0.65rem"),
+                    ],
+                },
+            ]
+        )
+        .format({"Valor": "{:,.2f}"}, na_rep="—")
+    )
+
+
 def mostrar_dashboard_area(nombre_area, titulo):
     st.header(titulo)
 
@@ -264,8 +317,20 @@ def mostrar_dashboard_area(nombre_area, titulo):
             )
 
     st.subheader("Registros mostrados")
-    st.dataframe(
-        datos_filtrados.sort_values("Fecha", ascending=False),
-        width="stretch",
-        hide_index=True,
-    )
+    with st.container(border=True):
+        st.caption("DETALLE DE MEDICIONES · ORDEN CRONOLÓGICO DESCENDENTE")
+        st.dataframe(
+            preparar_tabla_premium(datos_filtrados),
+            width="stretch",
+            hide_index=True,
+            column_config={
+                "Fecha": st.column_config.DateColumn(
+                    "Fecha",
+                    format="DD/MM/YYYY",
+                ),
+                "Valor": st.column_config.NumberColumn(
+                    "Valor",
+                    format="%.2f",
+                ),
+            },
+        )
