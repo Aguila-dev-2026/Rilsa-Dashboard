@@ -9,5 +9,7 @@ class InformeImpresionTests(unittest.TestCase):
         self.assertIn("color-scheme: light", estilos)
         self.assertIn("stDataFrame", estilos)
         self.assertIn("stPlotlyChart", estilos)
-        self.assertIn("grid-template-columns: 220px", estilos)
+        self.assertIn("[data-testid='stSidebar']", estilos)
+        self.assertIn("display: none !important", estilos)
+        self.assertNotIn("grid-template-columns: 220px", estilos)
         self.assertIn("stSidebar", estilos)
