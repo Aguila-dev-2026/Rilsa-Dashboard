@@ -5,7 +5,6 @@ import streamlit.components.v1 as components
 
 from funciones.cargar_datos import cargar_datos_operacionales
 from funciones.filtros import filtrar_por_fecha, filtrar_por_parametro
-from funciones.tema import tema_oscuro
 
 
 CONFIGURACION_GRAFICO = {
@@ -21,18 +20,17 @@ TINTA = "#282422"
 LINEA_SUAVE = "rgba(117,110,103,0.16)"
 
 
+def tema_nativo_oscuro():
+    try:
+        return st.context.theme.type == "dark"
+    except (AttributeError, RuntimeError):
+        return True
+
+
 def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
-    oscuro = tema_oscuro()
-    tinta = "#F4F0E9" if oscuro else "#12100F"
-    texto_eje = "#C8BDB3" if oscuro else "#332E2A"
-    texto_secundario = "#B9AFA5" if oscuro else "#514A44"
-    linea_eje = "rgba(244,240,233,0.22)" if oscuro else "rgba(23,21,20,0.46)"
-    cuadricula = "rgba(244,240,233,0.10)" if oscuro else "rgba(23,21,20,0.14)"
-    vino = "#C65C6B" if oscuro else VINO
-    vino_oscuro = "#7A2634" if oscuro else VINO_OSCURO
-    cobre = "#D99A68" if oscuro else COBRE
-    borde_marcador = "#141210" if oscuro else "#FFFDF8"
-    relleno = "rgba(198,92,107,0.11)" if oscuro else "rgba(109,31,43,0.07)"
+    vino = "#A94353"
+    vino_oscuro = "#6D1F2B"
+    cobre = "#D99A68"
 
     etiqueta_valor = f"%{{y:,.2f}} {unidad}".strip()
     fig.update_traces(
@@ -56,24 +54,20 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
             marker=dict(
                 color=cobre,
                 size=7,
-                line=dict(color=borde_marcador, width=1.5),
+                line=dict(color="#FFFDF8", width=1.4),
             ),
             fill="tozeroy",
-            fillcolor=relleno,
+            fillcolor="rgba(169,67,83,0.09)",
         )
 
     fig.update_layout(
-        template="plotly_dark" if oscuro else "plotly_white",
         title=dict(
             text=f"<b>{parametro}</b><br><sup>Evolución del período seleccionado</sup>",
             x=0.015,
             xanchor="left",
-            font=dict(size=21, color=tinta),
+            font=dict(size=21),
         ),
-        font=dict(
-            family='"Source Sans Pro", sans-serif',
-            color=tinta,
-        ),
+        font=dict(family='"Source Sans Pro", sans-serif'),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         hoverlabel=dict(
@@ -90,19 +84,17 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         title=None,
         showgrid=False,
         showline=True,
-        linecolor=linea_eje,
         linewidth=1,
-        tickfont=dict(size=12, color=texto_eje),
+        tickfont=dict(size=12),
     )
     fig.update_yaxes(
         title=f"Valor ({unidad})" if unidad else "Valor",
         showgrid=True,
-        gridcolor=cuadricula,
         gridwidth=1,
         zeroline=False,
         showline=False,
-        tickfont=dict(size=12, color=texto_eje),
-        title_font=dict(size=12, color=texto_secundario),
+        tickfont=dict(size=12),
+        title_font=dict(size=12),
         title_standoff=22,
         automargin=True,
     )
@@ -110,13 +102,25 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
 def mostrar_grafico_desplazable(fig, cantidad_dias):
     """Replica el tema nativo y añade scroll únicamente desde el día 32."""
     ancho_grafico = cantidad_dias * 48
+    oscuro = tema_nativo_oscuro()
+    texto = "#FAFAFA" if oscuro else "#171514"
+    texto_eje = "#C8CBD4" if oscuro else "#332E2A"
+    cuadricula = "rgba(250,250,250,0.12)" if oscuro else "rgba(23,21,20,0.14)"
 
     fig.update_layout(
+        template="plotly_dark" if oscuro else "plotly_white",
+        font=dict(family='"Source Sans Pro", sans-serif', color=texto),
         width=ancho_grafico,
         height=480,
         autosize=False,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
+    )
+    fig.update_xaxes(tickfont=dict(size=12, color=texto_eje))
+    fig.update_yaxes(
+        tickfont=dict(size=12, color=texto_eje),
+        title_font=dict(size=12, color=texto_eje),
+        gridcolor=cuadricula,
     )
 
     grafico_html = fig.to_html(
@@ -232,7 +236,6 @@ def mostrar_dashboard_area(nombre_area, titulo):
     opciones = {
         "x": "Fecha",
         "y": "Valor",
-        "template": "plotly_dark" if tema_oscuro() else "plotly_white",
         "title": f"{parametro} — evolución en el período seleccionado",
         "labels": {
             "Fecha": "Fecha",
@@ -261,7 +264,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
     dias = pd.date_range(fecha_inicio, fecha_fin, freq="D")
     margen_lateral = pd.Timedelta(hours=12)
     dias_semana = ("L", "M", "M", "J", "V", "S", "D")
-    azul_fin_semana = "#72B7E3" if tema_oscuro() else "#1E5678"
+    azul_fin_semana = "#4F92BD"
     etiquetas_dias = [
         (
             f"<span style='color:{azul_fin_semana}'><b>{dia.day}<br>"
@@ -295,7 +298,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
                 fig,
                 width="stretch",
                 config=CONFIGURACION_GRAFICO,
-                theme="streamlit" if tema_oscuro() else None,
+                theme="streamlit",
             )
 
     st.subheader("Registros mostrados")
