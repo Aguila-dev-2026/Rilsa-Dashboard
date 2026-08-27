@@ -135,6 +135,6 @@ else:
 
 datos_para_impresion = st.session_state.get("datos_para_impresion")
 if datos_para_impresion is not None:
-    from funciones.informe_impresion import generar_informe_impresion
+    from funciones.informe_impresion import estilos_impresion_dashboard
 
-    st.html(generar_informe_impresion(datos_para_impresion))
+    st.html(estilos_impresion_dashboard())
