@@ -433,16 +433,27 @@ def mostrar_dashboard_area(nombre_area, titulo):
 
     margen_lateral = pd.Timedelta(hours=12)
     dias_semana = ("L", "M", "M", "J", "V", "S", "D")
+    meses = (
+        "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
+        "JUL", "AGO", "SEP", "OCT", "NOV", "DIC",
+    )
     azul_fin_semana = "#4F92BD"
-    etiquetas_dias = [
-        (
-            f"<span style='color:{azul_fin_semana}'><b>{dia.day}<br>"
-            f"{dias_semana[dia.weekday()]}</b></span>"
-            if dia.weekday() >= 5
-            else f"{dia.day}<br>{dias_semana[dia.weekday()]}"
-        )
-        for dia in dias
-    ]
+    etiquetas_dias = []
+    for dia in dias:
+        if dia.weekday() >= 5:
+            etiqueta = (
+                f"<span style='color:{azul_fin_semana}'><b>{dia.day}<br>"
+                f"{dias_semana[dia.weekday()]}</b></span>"
+            )
+        else:
+            etiqueta = f"{dia.day}<br>{dias_semana[dia.weekday()]}"
+
+        if dia.day == 1:
+            etiqueta += (
+                f"<br><span style='color:{COBRE}'><b>"
+                f"{meses[dia.month - 1]}</b></span>"
+            )
+        etiquetas_dias.append(etiqueta)
 
     fig.update_xaxes(
         range=[
