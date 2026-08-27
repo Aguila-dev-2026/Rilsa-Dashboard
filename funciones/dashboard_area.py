@@ -25,6 +25,7 @@ CONFIGURACION_GRAFICO = {
 VINO = "#6D1F2B"
 COBRE = "#B36F3D"
 AZUL_CORPORATIVO = "#147EAF"
+ROJO_ALERTA = "#A12C32"
 TINTA = "#282422"
 LINEA_SUAVE = "rgba(117,110,103,0.16)"
 
@@ -92,6 +93,90 @@ BANDAS_NCH1333_RIEGO = {
 
 def obtener_banda_normativa(parametro):
     return BANDAS_NCH1333_RIEGO.get(parametro)
+
+
+def obtener_limites_activos(parametro, limites_internos=None):
+    """Devuelve el rango más restrictivo de las bandas actualmente visibles."""
+    inferiores = []
+    superiores = []
+    mostrar_normativa = (
+        limites_internos is None
+        or limites_internos.get("normativa", True)
+    )
+    normativa = obtener_banda_normativa(parametro)
+    if normativa and mostrar_normativa:
+        if normativa.get("inferior") is not None:
+            inferiores.append(float(normativa["inferior"]))
+        if normativa.get("superior") is not None:
+            superiores.append(float(normativa["superior"]))
+
+    if limites_internos is not None:
+        if limites_internos.get("inferior") is not None:
+            inferiores.append(float(limites_internos["inferior"]))
+        if limites_internos.get("superior") is not None:
+            superiores.append(float(limites_internos["superior"]))
+
+    return (
+        max(inferiores) if inferiores else None,
+        min(superiores) if superiores else None,
+    )
+
+
+def resaltar_valores_fuera_de_rango(
+    fig,
+    tipo_grafico,
+    datos,
+    limites_activos,
+    columna_medicion=None,
+):
+    """Destaca en rojo las mediciones reales que exceden una banda activa."""
+    limite_inferior, limite_superior = limites_activos
+    if limite_inferior is None and limite_superior is None:
+        return
+
+    serie = datos[["Fecha", "Valor"]].copy().reset_index(drop=True)
+    valores = pd.to_numeric(serie["Valor"], errors="coerce")
+    fuera_de_rango = pd.Series(False, index=serie.index)
+    if limite_inferior is not None:
+        fuera_de_rango |= valores.lt(limite_inferior)
+    if limite_superior is not None:
+        fuera_de_rango |= valores.gt(limite_superior)
+    fuera_de_rango &= valores.notna()
+    if columna_medicion is not None:
+        fuera_de_rango &= datos[columna_medicion].reset_index(drop=True).astype(bool)
+
+    if tipo_grafico == "Barras":
+        colores = [
+            ROJO_ALERTA if alerta else AZUL_CORPORATIVO
+            for alerta in fuera_de_rango
+        ]
+        fig.update_traces(marker_color=colores)
+        return
+
+    # La línea azul permanece como contexto; solo los tramos y puntos fuera de
+    # rango se superponen en rojo para no sugerir que los datos faltantes alertan.
+    serie["FueraDeRango"] = fuera_de_rango
+    serie["Tramo"] = serie["FueraDeRango"].ne(
+        serie["FueraDeRango"].shift()
+    ).cumsum()
+    primer_tramo = True
+    for _, tramo in serie[serie["FueraDeRango"]].groupby("Tramo"):
+        fig.add_scatter(
+            x=tramo["Fecha"],
+            y=tramo["Valor"],
+            mode="lines+markers",
+            name="Fuera de rango" if primer_tramo else None,
+            showlegend=primer_tramo,
+            line=dict(color=ROJO_ALERTA, width=3.8),
+            marker=dict(
+                color=ROJO_ALERTA,
+                size=8,
+                line=dict(color="#FFFFFF", width=1.4),
+            ),
+            hovertemplate="<b>%{x|%d/%m/%Y}</b><br>"
+            "Valor fuera de rango: %{y:,.2f}<extra></extra>",
+        )
+        primer_tramo = False
 
 
 def tipo_grafico_recomendado(parametro):
@@ -238,7 +323,6 @@ def agregar_bandas(fig, parametro, limites_internos=None):
 
     limite_inferior = limites_internos.get("inferior")
     limite_superior = limites_internos.get("superior")
-    rojo_alerta = "#A12C32"
     if limite_inferior is not None and limite_superior is not None:
         fig.add_hrect(
             y0=limite_inferior,
@@ -251,7 +335,7 @@ def agregar_bandas(fig, parametro, limites_internos=None):
                 f"{limite_inferior:,.2f}–{limite_superior:,.2f}"
             ),
             annotation_position="bottom right",
-            annotation_font=dict(color=rojo_alerta, size=12),
+            annotation_font=dict(color=ROJO_ALERTA, size=12),
         )
 
     bandas_activas = (
@@ -263,12 +347,12 @@ def agregar_bandas(fig, parametro, limites_internos=None):
             continue
         fig.add_hline(
             y=limite,
-            line=dict(color=rojo_alerta, width=2.4),
+            line=dict(color=ROJO_ALERTA, width=2.4),
             annotation_text=(f"{nombre} · {limite:,.2f}")
             if limite_inferior is None or limite_superior is None
             else None,
             annotation_position="bottom right",
-            annotation_font=dict(color=rojo_alerta, size=12),
+            annotation_font=dict(color=ROJO_ALERTA, size=12),
         )
 
 
@@ -691,6 +775,9 @@ def mostrar_dashboard_area(nombre_area, titulo):
             how="left",
         )
     )
+    # Barras completan el calendario con cero; se marca qué datos son mediciones
+    # reales para que esos ceros de relleno nunca aparezcan como alertas.
+    datos_grafico["MedicionDisponible"] = datos_grafico["Valor"].notna()
     datos_grafico["Valor"] = datos_grafico["Valor"].fillna(0)
 
     opciones = {
@@ -722,6 +809,13 @@ def mostrar_dashboard_area(nombre_area, titulo):
         fig,
         parametro,
         limites_internos=limites_internos,
+    )
+    resaltar_valores_fuera_de_rango(
+        fig,
+        tipo_grafico,
+        datos_grafico if tipo_grafico == "Barras" else datos_linea,
+        obtener_limites_activos(parametro, limites_internos),
+        columna_medicion="MedicionDisponible" if tipo_grafico == "Barras" else None,
     )
 
     if mostrar_tendencia:
