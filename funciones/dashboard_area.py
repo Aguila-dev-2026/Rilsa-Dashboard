@@ -1,8 +1,69 @@
 import plotly.express as px
 import streamlit as st
+import streamlit.components.v1 as components
 
 from funciones.cargar_datos import cargar_datos_operacionales
 from funciones.filtros import filtrar_por_fecha, filtrar_por_parametro
+
+
+def mostrar_grafico_con_gesto_touchpad(fig):
+    """Renderiza Plotly con desplazamiento temporal mediante dos dedos."""
+    html = """
+    <!doctype html>
+    <html>
+    <head>
+      <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+      <style>
+        html, body { margin: 0; padding: 0; overflow: hidden; }
+        #grafico { width: 100%; height: 510px; }
+      </style>
+    </head>
+    <body>
+      <div id="grafico"></div>
+      <script>
+        const figura = FIGURA_JSON;
+        const grafico = document.getElementById("grafico");
+
+        Plotly.newPlot(grafico, figura.data, figura.layout, {
+          displayModeBar: true,
+          scrollZoom: true,
+          responsive: true,
+          modeBarButtonsToRemove: [
+            "zoom2d", "select2d", "lasso2d", "autoScale2d"
+          ]
+        }).then(() => {
+          grafico.addEventListener("wheel", (evento) => {
+            // En un touchpad, el desplazamiento con dos dedos llega como
+            // un evento wheel. El pellizco (ctrlKey) conserva el zoom.
+            if (evento.ctrlKey) return;
+
+            const ejeX = grafico._fullLayout.xaxis;
+            const inicio = new Date(ejeX.range[0]).getTime();
+            const fin = new Date(ejeX.range[1]).getTime();
+            const delta = Math.abs(evento.deltaX) > 0
+              ? evento.deltaX
+              : evento.deltaY;
+
+            if (!delta || !Number.isFinite(inicio) || !Number.isFinite(fin)) {
+              return;
+            }
+
+            evento.preventDefault();
+            const desplazamiento = delta * (fin - inicio) / grafico.clientWidth;
+            Plotly.relayout(grafico, {
+              "xaxis.range": [
+                new Date(inicio + desplazamiento).toISOString(),
+                new Date(fin + desplazamiento).toISOString()
+              ]
+            });
+          }, { passive: false });
+        });
+      </script>
+    </body>
+    </html>
+    """.replace("FIGURA_JSON", fig.to_json())
+
+    components.html(html, height=520, scrolling=False)
 
 
 def mostrar_dashboard_area(nombre_area, titulo):
@@ -70,21 +131,15 @@ def mostrar_dashboard_area(nombre_area, titulo):
         dragmode="pan",
         margin=dict(l=10, r=10, t=55, b=10),
     )
-    # El eje Y queda bloqueado: tanto el zoom como Pan actúan sobre el eje\n    # temporal (X), sin alterar la escala de los valores.
     fig.update_xaxes(fixedrange=False)
     fig.update_yaxes(fixedrange=True)
 
-    configuracion_grafico = {
-        "displayModeBar": True,
-        "scrollZoom": True,
-        "modeBarButtonsToRemove": [
-            "zoom2d",
-            "select2d",
-            "lasso2d",
-            "autoScale2d",
-        ],
-    }
-    st.plotly_chart(fig, width="stretch", config=configuracion_grafico)
+    st.caption(
+        "Desliza con dos dedos sobre el gráfico para recorrer el tiempo. "
+        "El pellizco y los botones de zoom solo modifican el eje X."
+    )
+    mostrar_grafico_con_gesto_touchpad(fig)
+
     st.subheader("Registros mostrados")
     st.dataframe(
         datos_filtrados.sort_values("Fecha", ascending=False),
