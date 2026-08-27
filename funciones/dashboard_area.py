@@ -179,11 +179,11 @@ def preparar_tabla_premium(datos):
     modo_oscuro = tema_oscuro()
 
     if modo_oscuro:
-        fondo_par = "#12100F"
-        fondo_impar = "#181513"
+        fondo_par = "#171514"
+        fondo_impar = "#211D1B"
         texto = "#F4F0E9"
-        encabezado = "#3A1118"
-        borde = "#2C2824"
+        encabezado = "#48121A"
+        borde = "#3A3430"
         valor = "#D99A68"
     else:
         fondo_par = "#FFFDF8"
@@ -339,7 +339,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
                 fig,
                 width="stretch",
                 config=CONFIGURACION_GRAFICO,
-                theme=None,
+                theme="streamlit",
             )
 
     st.subheader("Registros mostrados")
