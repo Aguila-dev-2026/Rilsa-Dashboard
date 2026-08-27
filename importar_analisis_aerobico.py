@@ -162,9 +162,6 @@ def importar_columnas(
             if columna_turno and len(fila) >= columna_turno
             else ""
         )
-        if turno.casefold() == "tarde":
-            continue
-
         for columna, (parametro, unidad, tipo_dato) in mapeo.items():
             if (hoja.title, numero_fila, columna) in celdas_rotas:
                 continue
