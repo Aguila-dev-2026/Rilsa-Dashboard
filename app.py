@@ -35,17 +35,12 @@ def aplicar_identidad_volta():
           [data-testid="stSidebar"] [data-baseweb="radio"] > div {
             border-color: rgba(255,255,255,.28);
           }
-          [data-testid="stSidebar"] [role="radiogroup"] label {
-            background: #1F315D;
-            border: 1px solid rgba(255,255,255,.14);
-            border-radius: 7px;
-            margin: 4px 0;
-            padding: 8px 10px;
+          [data-testid="stSidebar"] [data-baseweb="radio"] [aria-checked="false"] {
+            color: #FFFFFF !important;
           }
-          [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
-            background: #147EAF;
-            border-color: #67C5E8;
-            box-shadow: 0 2px 7px rgba(0,0,0,.18);
+          [data-testid="stSidebar"] [data-baseweb="radio"] [aria-checked="false"] svg {
+            fill: #FFFFFF !important;
+            stroke: #FFFFFF !important;
           }
           [data-testid="stSidebar"] [data-baseweb="radio"] [aria-checked="true"] {
             color: #67C5E8 !important;
