@@ -14,8 +14,34 @@ def estilos_impresion_dashboard() -> str:
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        header, footer, [data-testid='stSidebar'], [data-testid='stToolbar'] {
+        header, footer, [data-testid='stToolbar'] {
           display: none !important;
+        }
+        [data-testid='stAppViewContainer'] {
+          display: grid !important;
+          grid-template-columns: 220px minmax(0, 1fr) !important;
+          column-gap: 12mm !important;
+          align-items: start !important;
+        }
+        [data-testid='stSidebar'] {
+          display: block !important;
+          visibility: visible !important;
+          position: relative !important;
+          grid-column: 1 !important;
+          width: 220px !important;
+          min-width: 220px !important;
+          height: auto !important;
+          transform: none !important;
+          background: #ece4da !important;
+          color: #171514 !important;
+          border-right: 1px solid #c9bdb0 !important;
+        }
+        [data-testid='stMain'],
+        [data-testid='stAppViewContainer'] .main {
+          grid-column: 2 !important;
+          width: 100% !important;
+          min-width: 0 !important;
+          margin-left: 0 !important;
         }
         .riles-tabla-titulo,
         [data-testid='stElementContainer']:has([data-testid='stDataFrame']),
