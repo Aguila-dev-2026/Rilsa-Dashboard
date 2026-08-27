@@ -11,16 +11,18 @@ TEMAS = {
         "linea": "#D8CEC2",
         "sombra": "0 16px 42px rgba(72,18,26,0.08)",
         "control": "#FFFDF8",
+        "halo": "rgba(179,111,61,0.08)",
     },
     "dark": {
-        "fondo": "#151311",
-        "panel": "#1F1B19",
-        "sidebar": "#191614",
+        "fondo": "#0D0C0B",
+        "panel": "#141210",
+        "sidebar": "#100F0E",
         "texto": "#F4F0E9",
-        "muted": "#B9AFA5",
-        "linea": "#3B342F",
-        "sombra": "0 18px 48px rgba(0,0,0,0.28)",
-        "control": "#292320",
+        "muted": "#AAA096",
+        "linea": "#2C2824",
+        "sombra": "0 20px 52px rgba(0,0,0,0.46)",
+        "control": "#1A1715",
+        "halo": "rgba(179,111,61,0.025)",
     },
 }
 
@@ -41,7 +43,7 @@ def aplicar_tema(modo: str) -> None:
         [data-testid="stAppViewContainer"],
         .stApp {{
           background:
-            radial-gradient(circle at 88% 4%, rgba(179,111,61,0.08), transparent 28rem),
+            radial-gradient(circle at 88% 4%, undefined, transparent 28rem),
             {tema["fondo"]};
           color: {tema["texto"]};
         }}
