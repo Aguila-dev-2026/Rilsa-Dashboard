@@ -39,6 +39,18 @@ def aplicar_identidad_volta():
             color: #67C5E8 !important;
             font-weight: 700;
           }
+          [data-testid="stSidebar"] [data-baseweb="select"] > div,
+          [data-testid="stSidebar"] [data-baseweb="select"] > div:hover {
+            background: #EAF0F6 !important;
+            border-color: #C8D6E3 !important;
+            color: #263B70 !important;
+          }
+          [data-testid="stSidebar"] [data-baseweb="select"] input,
+          [data-testid="stSidebar"] [data-baseweb="select"] span,
+          [data-testid="stSidebar"] [data-baseweb="select"] svg {
+            color: #263B70 !important;
+            fill: #263B70 !important;
+          }
           [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,.24); }
           h1, h2, h3 { color: #263B70 !important; letter-spacing: -.02em; }
           [data-testid="stMetric"] {
