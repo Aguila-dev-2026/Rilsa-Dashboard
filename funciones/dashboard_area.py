@@ -8,6 +8,7 @@ from funciones.cargar_datos import (
     cargar_catalogo_operacional,
     cargar_datos_operacionales,
 )
+from funciones.configuracion import obtener_configuracion
 from funciones.filtros import (
     filtrar_contexto_operacional,
     filtrar_por_parametro,
@@ -369,8 +370,47 @@ def preparar_tabla_premium(datos):
         .format({"Valor": "{:,.2f}"}, na_rep="—")
     )
 
+
+def mostrar_descarga_informe_completo():
+    """Permite descargar un informe que no queda limitado al filtro visible."""
+    clave_pdf = "informe_pdf_operacional_completo"
+    with st.sidebar.expander("Informe PDF", expanded=False):
+        st.caption(
+            "Incluye todas las áreas, parámetros, gráficos, indicadores y "
+            "registros disponibles; no solo la selección actual."
+        )
+        if st.button("Preparar informe completo", key="preparar_informe_pdf"):
+            with st.spinner("Generando el informe PDF completo..."):
+                from funciones.informe_pdf import generar_informe_pdf
+
+                configuracion = obtener_configuracion()
+                datos_completos = cargar_datos_operacionales()
+                origen = (
+                    "PostgreSQL centralizado (sincronizado desde SharePoint)"
+                    if configuracion.es_nube
+                    else "Base local SQLite / archivos Excel locales"
+                )
+                st.session_state[clave_pdf] = generar_informe_pdf(
+                    datos_completos,
+                    entorno=("Nube" if configuracion.es_nube else "Local"),
+                    origen=origen,
+                )
+
+        informe = st.session_state.get(clave_pdf)
+        if informe:
+            st.download_button(
+                "Descargar informe PDF",
+                data=informe,
+                file_name="informe_operacional_riles.pdf",
+                mime="application/pdf",
+                key="descargar_informe_pdf",
+                width="stretch",
+            )
+            st.caption("El informe se preparó con todos los datos disponibles.")
+
 def mostrar_dashboard_area(nombre_area, titulo):
     st.header(titulo)
+    mostrar_descarga_informe_completo()
 
     catalogo = cargar_catalogo_operacional(nombre_area=nombre_area)
     catalogo = catalogo[catalogo["Area"].eq(nombre_area)].copy()
