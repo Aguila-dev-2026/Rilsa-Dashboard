@@ -7,7 +7,7 @@ textColor = "#1F2A44"
 font = "sans serif"
 
 [theme.light.sidebar]
-backgroundColor = "#263B70"
-secondaryBackgroundColor = "#30477C"
-textColor = "#FFFFFF"
-borderColor = "#263B70"
+backgroundColor = "#EAF0F6"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#263B70"
+borderColor = "#C8D6E3"
