@@ -64,12 +64,10 @@ def mostrar_grafico_con_gesto_touchpad(fig):
               return;
             }
 
-            const delta = Math.abs(evento.deltaX) > 0
-              ? evento.deltaX
-              : evento.deltaY;
-            if (!delta) return;
-
-            const desplazamiento = delta * duracion / ancho;
+            // Solo el gesto horizontal controla el gráfico. El gesto
+            // vertical no se intercepta y conserva el scroll de la página.
+            if (Math.abs(evento.deltaX) <= Math.abs(evento.deltaY)) return;
+            const desplazamiento = evento.deltaX * duracion / ancho;
             Plotly.relayout(grafico, {
               "xaxis.range": [
                 new Date(inicio + desplazamiento).toISOString(),
@@ -155,8 +153,8 @@ def mostrar_dashboard_area(nombre_area, titulo):
     fig.update_yaxes(fixedrange=True)
 
     st.caption(
-        "Desliza con dos dedos para recorrer el tiempo; pellizca para acercar "
-        "o alejar. Ambos gestos solo modifican el eje X."
+        "Desliza horizontalmente con dos dedos para recorrer el tiempo; "
+        "el desplazamiento vertical sigue moviendo la página. Pellizca para acercar o alejar."
     )
     mostrar_grafico_con_gesto_touchpad(fig)
 
