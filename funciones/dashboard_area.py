@@ -33,23 +33,43 @@ def mostrar_grafico_con_gesto_touchpad(fig):
           ]
         }).then(() => {
           grafico.addEventListener("wheel", (evento) => {
-            // En un touchpad, el desplazamiento con dos dedos llega como
-            // un evento wheel. El pellizco (ctrlKey) conserva el zoom.
-            if (evento.ctrlKey) return;
-
             const ejeX = grafico._fullLayout.xaxis;
             const inicio = new Date(ejeX.range[0]).getTime();
             const fin = new Date(ejeX.range[1]).getTime();
-            const delta = Math.abs(evento.deltaX) > 0
-              ? evento.deltaX
-              : evento.deltaY;
 
-            if (!delta || !Number.isFinite(inicio) || !Number.isFinite(fin)) {
+            if (!Number.isFinite(inicio) || !Number.isFinite(fin)) {
               return;
             }
 
             evento.preventDefault();
-            const desplazamiento = delta * (fin - inicio) / grafico.clientWidth;
+            const ancho = grafico.getBoundingClientRect().width;
+            const posicion = Math.min(
+              1,
+              Math.max(0, (evento.clientX - grafico.getBoundingClientRect().left) / ancho)
+            );
+            const duracion = fin - inicio;
+
+            // Chrome y Firefox representan el pellizco del touchpad como un
+            // wheel con ctrlKey. Se escala solo la ventana temporal.
+            if (evento.ctrlKey) {
+              const factor = Math.exp(evento.deltaY * 0.01);
+              const nuevaDuracion = Math.max(86400000, duracion * factor);
+              const ancla = inicio + duracion * posicion;
+              Plotly.relayout(grafico, {
+                "xaxis.range": [
+                  new Date(ancla - nuevaDuracion * posicion).toISOString(),
+                  new Date(ancla + nuevaDuracion * (1 - posicion)).toISOString()
+                ]
+              });
+              return;
+            }
+
+            const delta = Math.abs(evento.deltaX) > 0
+              ? evento.deltaX
+              : evento.deltaY;
+            if (!delta) return;
+
+            const desplazamiento = delta * duracion / ancho;
             Plotly.relayout(grafico, {
               "xaxis.range": [
                 new Date(inicio + desplazamiento).toISOString(),
@@ -135,8 +155,8 @@ def mostrar_dashboard_area(nombre_area, titulo):
     fig.update_yaxes(fixedrange=True)
 
     st.caption(
-        "Desliza con dos dedos sobre el gráfico para recorrer el tiempo. "
-        "Los botones de zoom solo modifican el eje X."
+        "Desliza con dos dedos para recorrer el tiempo; pellizca para acercar "
+        "o alejar. Ambos gestos solo modifican el eje X."
     )
     mostrar_grafico_con_gesto_touchpad(fig)
 
