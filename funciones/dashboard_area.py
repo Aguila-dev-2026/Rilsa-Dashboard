@@ -480,13 +480,9 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         hoverlabel=dict(
-            bgcolor="#172C50",
-            bordercolor="#67C5E8",
-            font=dict(
-                family='"Source Sans Pro", sans-serif',
-                color="#FFFFFF",
-                size=14,
-            ),
+            bgcolor=azul_borde,
+            bordercolor="#BFE8F8",
+            font=dict(color="#FFFFFF", size=13),
             align="left",
             namelength=-1,
         ),
