@@ -22,7 +22,6 @@ CONFIGURACION_GRAFICO = {
 }
 
 VINO = "#6D1F2B"
-VINO_OSCURO = "#48121A"
 COBRE = "#B36F3D"
 TINTA = "#282422"
 LINEA_SUAVE = "rgba(117,110,103,0.16)"
@@ -186,25 +185,13 @@ def agregar_tendencia(fig, datos, parametro, unidad):
     return metodo
 
 
-def tema_nativo_oscuro():
-    try:
-        return st.context.theme.type == "dark"
-    except (AttributeError, RuntimeError):
-        return True
-
-
 def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     vino = "#A94353"
-    vino_oscuro = "#6D1F2B"
+    vino_borde = "#6D1F2B"
     cobre = "#D99A68"
-    oscuro = tema_nativo_oscuro()
-    texto = "#FAFAFA" if oscuro else "#171514"
-    texto_eje = "#C8CBD4" if oscuro else "#332E2A"
-    cuadricula = (
-        "rgba(250,250,250,0.12)"
-        if oscuro
-        else "rgba(23,21,20,0.24)"
-    )
+    texto = "#171514"
+    texto_eje = "#332E2A"
+    cuadricula = "rgba(23,21,20,0.24)"
 
     etiqueta_valor = f"%{{y:,.2f}} {unidad}".strip()
     fig.update_traces(
@@ -218,7 +205,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         fig.update_traces(
             marker=dict(
                 color=vino,
-                line=dict(color=vino_oscuro, width=0.7),
+                line=dict(color=vino_borde, width=0.7),
             ),
             opacity=0.94,
         )
@@ -248,8 +235,8 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         hoverlabel=dict(
-            bgcolor=vino_oscuro,
-            bordercolor=vino_oscuro,
+            bgcolor=vino_borde,
+            bordercolor=vino_borde,
             font=dict(color="#FFFFFF", size=13),
         ),
         hovermode="x unified",
@@ -278,15 +265,14 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     )
 
 def mostrar_grafico_desplazable(fig, cantidad_periodos):
-    """Replica el tema nativo y añade scroll desde el período visible 32."""
+    """Mantiene el gráfico claro y añade scroll desde el período visible 32."""
     ancho_grafico = cantidad_periodos * 48
-    oscuro = tema_nativo_oscuro()
-    texto = "#FAFAFA" if oscuro else "#171514"
-    texto_eje = "#C8CBD4" if oscuro else "#332E2A"
-    cuadricula = "rgba(250,250,250,0.12)" if oscuro else "rgba(23,21,20,0.24)"
+    texto = "#171514"
+    texto_eje = "#332E2A"
+    cuadricula = "rgba(23,21,20,0.24)"
 
     fig.update_layout(
-        template="plotly_dark" if oscuro else "plotly_white",
+        template="plotly_white",
         font=dict(family='"Source Sans Pro", sans-serif', color=texto),
         width=ancho_grafico,
         height=480,
@@ -358,8 +344,7 @@ def preparar_tabla_premium(datos):
         .reset_index(drop=True)
     )
 
-    # Los fondos y encabezados quedan a cargo del tema nativo de Streamlit,
-    # para que cambien de forma fiable entre Light y Dark.
+    # La aplicación utiliza una sola paleta clara definida en config.toml.
     return (
         tabla.style
         .set_properties(
