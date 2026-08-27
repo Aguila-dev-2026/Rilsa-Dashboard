@@ -25,7 +25,7 @@ def mostrar_grafico_con_gesto_touchpad(fig):
         const grafico = document.getElementById("grafico");
 
         Plotly.newPlot(grafico, figura.data, figura.layout, {
-          displayModeBar: true,
+          displayModeBar: false,
           scrollZoom: false,
           responsive: true,
           modeBarButtonsToRemove: [
