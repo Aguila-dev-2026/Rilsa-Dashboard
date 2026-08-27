@@ -354,7 +354,7 @@ def preparar_tabla_premium(datos):
 def mostrar_dashboard_area(nombre_area, titulo):
     st.header(titulo)
 
-    datos = cargar_datos_operacionales()
+    datos = cargar_datos_operacionales(nombre_area=nombre_area)
     datos = datos[datos["Area"] == nombre_area].copy()
 
     if datos.empty:
