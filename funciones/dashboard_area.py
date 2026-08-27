@@ -23,6 +23,7 @@ CONFIGURACION_GRAFICO = {
 
 VINO = "#6D1F2B"
 COBRE = "#B36F3D"
+AZUL_CORPORATIVO = "#2F6F9F"
 TINTA = "#282422"
 LINEA_SUAVE = "rgba(117,110,103,0.16)"
 
@@ -256,8 +257,7 @@ def configurar_banda_alerta(datos, clave):
 
 
 def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
-    vino = "#A94353"
-    vino_borde = "#6D1F2B"
+    azul_borde = "#244F70"
     cobre = "#D99A68"
     texto = "#171514"
     texto_eje = "#332E2A"
@@ -274,21 +274,21 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     if tipo_grafico == "Barras":
         fig.update_traces(
             marker=dict(
-                color=vino,
-                line=dict(color=vino_borde, width=0.7),
+                color=AZUL_CORPORATIVO,
+                line=dict(color=azul_borde, width=0.7),
             ),
             opacity=0.94,
         )
     else:
         fig.update_traces(
-            line=dict(color=vino, width=3),
+            line=dict(color=AZUL_CORPORATIVO, width=3.2),
             marker=dict(
-                color=cobre,
+                color="#6FA4C8",
                 size=7,
                 line=dict(color="#FFFDF8", width=1.4),
             ),
             fill="tozeroy",
-            fillcolor="rgba(169,67,83,0.09)",
+            fillcolor="rgba(47,111,159,0.10)",
         )
 
     fig.update_layout(
@@ -305,8 +305,8 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         hoverlabel=dict(
-            bgcolor=vino_borde,
-            bordercolor=vino_borde,
+            bgcolor=azul_borde,
+            bordercolor=azul_borde,
             font=dict(color="#FFFFFF", size=13),
         ),
         hovermode="x unified",
