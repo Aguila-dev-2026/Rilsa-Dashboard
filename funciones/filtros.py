@@ -5,19 +5,17 @@ def filtrar_por_fecha(datos, columna_fecha="Fecha"):
     fecha_min = datos[columna_fecha].min().date()
     fecha_max = datos[columna_fecha].max().date()
 
-    fecha_inicio = st.sidebar.date_input(
-        "Fecha inicio",
-        value=fecha_min,
+    fecha_inicio, fecha_fin = st.sidebar.date_input(
+        "Rango de fechas",
+        value=(fecha_min, fecha_max),
         min_value=fecha_min,
-        max_value=fecha_max
+        max_value=fecha_max,
+        key="rango_fechas"
     )
 
-    fecha_fin = st.sidebar.date_input(
-        "Fecha fin",
-        value=fecha_max,
-        min_value=fecha_min,
-        max_value=fecha_max
-    )
+    if fecha_inicio > fecha_fin:
+        st.sidebar.error("La fecha inicial no puede ser posterior a la final.")
+        return datos.iloc[0:0].copy()
 
     filtro = (
         (datos[columna_fecha].dt.date >= fecha_inicio)
@@ -31,19 +29,14 @@ def filtrar_por_fecha(datos, columna_fecha="Fecha"):
 def filtrar_por_parametro(datos, columna_parametro="Parametro"):
     parametros = sorted(datos[columna_parametro].dropna().unique())
 
-    
-    parametros_sel = st.sidebar.multiselect(
-        "Parámetros",
+    parametro_seleccionado = st.sidebar.selectbox(
+        "Parámetro a visualizar",
         parametros,
-        default=parametros[:3]
+        key="selector_parametro"
     )
 
-    if not parametros_sel:
-        st.info("Selecciona al menos un parámetro.")
-        return datos.iloc[0:0].copy()
-
     return datos[
-        datos[columna_parametro].isin(parametros_sel)
+        datos[columna_parametro] == parametro_seleccionado
     ].copy()
 
 
