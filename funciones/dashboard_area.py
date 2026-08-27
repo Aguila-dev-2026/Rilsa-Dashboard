@@ -153,6 +153,20 @@ def agregar_tendencia(fig, datos, parametro, unidad):
             f"Tendencia: %{{y:,.2f}}{sufijo_unidad}<extra></extra>"
         ),
     )
+    fig.update_layout(
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.01,
+            xanchor="right",
+            x=0.99,
+        )
+    )
+    return metodo
+
+
+def agregar_bandas(fig, parametro, limites_internos=None):
+    """Añade bandas normativas e internas sin depender de la tendencia."""
     if parametro == "pH":
         fig.add_hrect(
             y0=5.5,
@@ -164,25 +178,81 @@ def agregar_tendencia(fig, datos, parametro, unidad):
             annotation_position="top left",
             annotation_font=dict(color="#4F9A75", size=12),
         )
+        for limite in (5.5, 9.0):
+            fig.add_hline(
+                y=limite,
+                line=dict(
+                    color="rgba(79,154,117,0.78)",
+                    width=1.2,
+                    dash="dash",
+                ),
+            )
+
+    if limites_internos is None:
+        return
+
+    limite_inferior, limite_superior = limites_internos
+    rojo_alerta = "#A12C32"
+    fig.add_hrect(
+        y0=limite_inferior,
+        y1=limite_superior,
+        fillcolor="rgba(161,44,50,0.075)",
+        line_width=0,
+        layer="below",
+        annotation_text=(
+            "Banda interna · "
+            f"{limite_inferior:,.2f}–{limite_superior:,.2f}"
+        ),
+        annotation_position="bottom right",
+        annotation_font=dict(color=rojo_alerta, size=12),
+    )
+    for limite in (limite_inferior, limite_superior):
         fig.add_hline(
-            y=5.5,
-            line=dict(color="rgba(79,154,117,0.72)", width=1, dash="dash"),
-        )
-        fig.add_hline(
-            y=9.0,
-            line=dict(color="rgba(79,154,117,0.72)", width=1, dash="dash"),
+            y=limite,
+            line=dict(color=rojo_alerta, width=2.4),
         )
 
-    fig.update_layout(
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.01,
-            xanchor="right",
-            x=0.99,
+
+def configurar_banda_alerta(datos, clave):
+    """Recoge límites internos editables y los conserva durante la sesión."""
+    valores = datos["Valor"].dropna().astype(float)
+    if valores.empty:
+        return None
+
+    minimo_observado = float(valores.min())
+    maximo_observado = float(valores.max())
+    amplitud = max(maximo_observado - minimo_observado, abs(valores.mean()) * 0.1, 1)
+    paso = max(amplitud / 100, 0.01)
+    superior_inicial = max(maximo_observado, minimo_observado + paso)
+
+    with st.sidebar.expander("Banda de alerta interna", expanded=False):
+        mostrar = st.toggle(
+            "Mostrar límites internos",
+            value=False,
+            key=f"mostrar_banda_interna_{clave}",
         )
-    )
-    return metodo
+        st.caption("Líneas rojas configurables para control operacional interno.")
+        if not mostrar:
+            return None
+
+        limite_inferior = st.number_input(
+            "Límite inferior",
+            value=minimo_observado,
+            step=paso,
+            format="%.3f",
+            key=f"limite_interno_inferior_{clave}",
+        )
+        limite_superior = st.number_input(
+            "Límite superior",
+            value=superior_inicial,
+            step=paso,
+            format="%.3f",
+            key=f"limite_interno_superior_{clave}",
+        )
+        if limite_inferior >= limite_superior:
+            st.warning("El límite inferior debe ser menor que el superior.")
+            return None
+        return float(limite_inferior), float(limite_superior)
 
 
 def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
@@ -452,6 +522,11 @@ def mostrar_dashboard_area(nombre_area, titulo):
         value=True,
         key=f"mostrar_tendencia_{clave_contexto}",
     )
+    clave_banda = f"{clave_contexto}_{parametro.casefold()}"
+    limites_internos = configurar_banda_alerta(
+        datos_filtrados,
+        clave=clave_banda,
+    )
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Registros", len(datos_filtrados))
@@ -550,6 +625,11 @@ def mostrar_dashboard_area(nombre_area, titulo):
         fig = px.line(datos_linea, markers=True, **opciones)
 
     aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad)
+    agregar_bandas(
+        fig,
+        parametro,
+        limites_internos=limites_internos,
+    )
 
     if mostrar_tendencia:
         metodo_tendencia = agregar_tendencia(
