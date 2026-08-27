@@ -493,7 +493,9 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     )
     fig.update_xaxes(
         title=None,
-        unifiedhovertitle_text="",
+        # Plotly restablece el encabezado automático si recibe una cadena vacía.
+        # El espacio de ancho cero lo oculta sin perder el hover unificado.
+        unifiedhovertitle_text="\u200b",
         showgrid=False,
         showline=True,
         linewidth=1,
