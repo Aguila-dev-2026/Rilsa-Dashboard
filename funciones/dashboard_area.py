@@ -168,9 +168,29 @@ def preparar_tabla_premium(datos):
         .reset_index(drop=True)
     )
 
+    try:
+        modo_oscuro = st.context.theme.type == "dark"
+    except (AttributeError, RuntimeError):
+        modo_oscuro = False
+
+    if modo_oscuro:
+        fondo_par = "#171514"
+        fondo_impar = "#211D1B"
+        texto = "#F4F0E9"
+        encabezado = "#48121A"
+        borde = "#3A3430"
+        valor = "#D99A68"
+    else:
+        fondo_par = "#FFFDF8"
+        fondo_impar = "#F7F2EC"
+        texto = "#282422"
+        encabezado = VINO_OSCURO
+        borde = "#E5DED5"
+        valor = VINO
+
     def alternar_filas(fila):
-        fondo = "#FFFDF8" if fila.name % 2 == 0 else "#F7F2EC"
-        return [f"background-color: {fondo}; color: #282422"] * len(fila)
+        fondo = fondo_par if fila.name % 2 == 0 else fondo_impar
+        return [f"background-color: {fondo}; color: {texto}"] * len(fila)
 
     return (
         tabla.style
@@ -178,7 +198,7 @@ def preparar_tabla_premium(datos):
         .set_properties(
             subset=["Valor"],
             **{
-                "color": VINO,
+                "color": valor,
                 "font-weight": "700",
             },
         )
@@ -187,7 +207,7 @@ def preparar_tabla_premium(datos):
                 {
                     "selector": "th",
                     "props": [
-                        ("background-color", VINO_OSCURO),
+                        ("background-color", encabezado),
                         ("color", "#FFFFFF"),
                         ("font-weight", "700"),
                         ("border", "none"),
@@ -196,7 +216,7 @@ def preparar_tabla_premium(datos):
                 {
                     "selector": "td",
                     "props": [
-                        ("border-color", "#E5DED5"),
+                        ("border-color", borde),
                         ("padding", "0.65rem"),
                     ],
                 },
