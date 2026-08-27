@@ -26,7 +26,7 @@ def mostrar_grafico_con_gesto_touchpad(fig):
 
         Plotly.newPlot(grafico, figura.data, figura.layout, {
           displayModeBar: true,
-          scrollZoom: true,
+          scrollZoom: false,
           responsive: true,
           modeBarButtonsToRemove: [
             "zoom2d", "select2d", "lasso2d", "autoScale2d"
@@ -136,7 +136,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
 
     st.caption(
         "Desliza con dos dedos sobre el gráfico para recorrer el tiempo. "
-        "El pellizco y los botones de zoom solo modifican el eje X."
+        "Los botones de zoom solo modifican el eje X."
     )
     mostrar_grafico_con_gesto_touchpad(fig)
 
