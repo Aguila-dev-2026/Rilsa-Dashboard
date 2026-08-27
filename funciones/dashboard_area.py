@@ -133,6 +133,26 @@ def agregar_tendencia(fig, datos, parametro, unidad):
             f"Tendencia: %{{y:,.2f}}{sufijo_unidad}<extra></extra>"
         ),
     )
+    if parametro == "pH":
+        fig.add_hrect(
+            y0=6,
+            y1=8,
+            fillcolor="rgba(46,106,77,0.14)",
+            line_width=0,
+            layer="below",
+            annotation_text="Banda operativa pH 6–8",
+            annotation_position="top left",
+            annotation_font=dict(color="#4F9A75", size=12),
+        )
+        fig.add_hline(
+            y=6,
+            line=dict(color="rgba(79,154,117,0.72)", width=1, dash="dash"),
+        )
+        fig.add_hline(
+            y=8,
+            line=dict(color="rgba(79,154,117,0.72)", width=1, dash="dash"),
+        )
+
     fig.update_layout(
         legend=dict(
             orientation="h",
