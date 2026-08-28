@@ -52,6 +52,10 @@ def aplicar_identidad_volta(tema):
           [data-testid="stAppViewContainer"] .main,
           [data-testid="stAppViewContainer"] .block-container {
             background: var(--fondo) !important;
+            color: var(--texto) !important;
+          }
+          header[data-testid="stHeader"] {
+            background: color-mix(in srgb, var(--fondo) 92%, transparent) !important;
           }
           [data-testid="stSidebar"] { background: var(--sidebar); }
           [data-testid="stSidebar"] h1,
@@ -74,14 +78,30 @@ def aplicar_identidad_volta(tema):
             font-weight: 700;
           }
           [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,.22); }
-          h1, h2, h3 { color: var(--texto) !important; letter-spacing: -.02em; }
+          h1, h2, h3,
+          [data-testid="stAppViewContainer"] p,
+          [data-testid="stAppViewContainer"] label,
+          [data-testid="stAppViewContainer"] [data-testid="stCaptionContainer"] {
+            color: var(--texto) !important;
+          }
+          h1, h2, h3 { letter-spacing: -.02em; }
+          [data-testid="stAppViewContainer"] [data-testid="stCaptionContainer"] {
+            color: var(--muted) !important;
+          }
+          [data-testid="stVerticalBlockBorderWrapper"],
+          [data-testid="stExpander"],
+          [data-testid="stForm"] {
+            background: var(--panel) !important;
+            border-color: var(--linea) !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,.16);
+          }
           [data-testid="stMetric"] {
             background: var(--panel);
             border: 1px solid var(--linea);
             border-top: 3px solid var(--azul);
-            border-radius: 4px;
+            border-radius: 8px;
             padding: 14px 16px;
-            box-shadow: 0 2px 10px rgba(31,42,68,.06);
+            box-shadow: 0 8px 22px rgba(0,0,0,.15);
           }
           [data-testid="stMetricLabel"] { color: var(--muted); }
           [data-testid="stMetricValue"] { color: var(--texto); }
@@ -98,6 +118,44 @@ def aplicar_identidad_volta(tema):
             color: #FFFFFF;
           }
           [data-testid="stDataFrame"] { border: 1px solid var(--linea); }
+          [data-testid="stDataFrame"],
+          [data-testid="stTable"],
+          [data-testid="stPlotlyChart"] {
+            background: var(--panel) !important;
+            border-radius: 8px;
+          }
+          [data-testid="stAppViewContainer"] [data-baseweb="select"] > div,
+          [data-testid="stAppViewContainer"] [data-baseweb="input"] > div,
+          [data-testid="stAppViewContainer"] input,
+          [data-testid="stAppViewContainer"] textarea {
+            background: var(--panel-sec) !important;
+            border-color: var(--linea) !important;
+            color: var(--texto) !important;
+          }
+          [data-testid="stSidebar"] [data-baseweb="select"] > div,
+          [data-testid="stSidebar"] [data-baseweb="input"] > div,
+          [data-testid="stSidebar"] input {
+            background: var(--sidebar-panel) !important;
+            border-color: rgba(255,255,255,.28) !important;
+            color: #FFFFFF !important;
+          }
+          [data-testid="stSidebar"] [data-baseweb="select"] svg,
+          [data-testid="stSidebar"] [data-baseweb="input"] svg {
+            color: #FFFFFF !important;
+            fill: #FFFFFF !important;
+          }
+          [data-baseweb="popover"] [role="listbox"],
+          [data-baseweb="menu"] {
+            background: var(--panel) !important;
+            color: var(--texto) !important;
+            border: 1px solid var(--linea) !important;
+          }
+          [data-baseweb="popover"] [role="option"] {
+            color: var(--texto) !important;
+          }
+          [data-testid="stAlert"] {
+            border-color: var(--linea) !important;
+          }
           .js-plotly-plot .hoverlayer .bg {
             stroke-width: 3px !important;
             rx: 7px;
