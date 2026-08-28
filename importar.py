@@ -32,6 +32,8 @@ COLUMNAS_PERMITIDAS = {
     "consumo p. anionico [kg]": "Consumo P. Aniónico [kg]",
     "consumo pac [kg]": "Consumo PAC [kg]",
     "consumo cal [kg]": "Consumo Cal [kg]",
+    "% humedad lodo 1": "% Humedad Lodo 1",
+    "% humedad lodo 2": "% Humedad Lodo 2",
     "energia electrica consumida": "Energía eléctrica consumida",
     "[m3]": "Volumen TK3 [m3]",
 }

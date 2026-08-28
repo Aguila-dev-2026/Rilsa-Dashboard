@@ -9,16 +9,20 @@ from funciones.cargar_datos import (
 from funciones.filtros import (
     filtrar_contexto_operacional,
     filtrar_por_parametro,
+    filtrar_por_turno,
     seleccionar_rango_fecha,
 )
+from funciones.feriados import FERIADOS_CHILE_2026
 from funciones.ui.tema import (
     COBRE,
+    colores_turnos,
     paleta_grafico,
     tema_nativo_oscuro,
 )
 from funciones.dominio.tendencias import PARAMETROS_ACUMULATIVOS
 from funciones.graficos.render import (
     aplicar_estilo_premium,
+    aplicar_margen_superior_eje_y,
     mostrar_grafico_desplazable,
     preparar_tabla_premium,
 )
@@ -35,8 +39,6 @@ from funciones.graficos.tendencias import (
     metodo_tendencia_recomendado,
     tipo_grafico_recomendado,
 )
-
-
 # Los acumulativos se suman por mes. Todos los demás parámetros activos
 # se resumen mediante promedio mensual.
 
@@ -141,6 +143,14 @@ def mostrar_dashboard_area(nombre_area, titulo):
         st.info("No hay datos para el rango de fechas seleccionado.")
         return
 
+    datos_filtrados, _ = filtrar_por_turno(
+        datos_filtrados,
+        clave=clave_contexto,
+    )
+    if datos_filtrados.empty:
+        st.info("No hay datos para el turno seleccionado en este período.")
+        return
+
     datos_filtrados = datos_filtrados.sort_values("Fecha")
     # El Print nativo lee esta selección durante el mismo rerun de Streamlit.
     # Así el informe respeta área, punto, parámetro y fechas visibles.
@@ -158,7 +168,6 @@ def mostrar_dashboard_area(nombre_area, titulo):
         ["Líneas", "Barras"],
         key=clave_tipo,
     )
-    st.sidebar.caption(f"Gráfico recomendado: {tipo_recomendado}.")
 
     mostrar_tendencia = st.sidebar.toggle(
         "Mostrar tendencia",
@@ -183,9 +192,18 @@ def mostrar_dashboard_area(nombre_area, titulo):
     # Primero se consolida cada día para que las mediciones Mañana/Tarde
     # no se dupliquen al construir un total mensual.
     datos_para_serie = datos_filtrados[datos_filtrados["Valor"].notna()].copy()
+    datos_para_serie["Fecha"] = datos_para_serie["Fecha"].dt.normalize()
+    columnas_serie = ["Fecha"]
+    turnos_reconocidos = {"Mañana", "Tarde", "Sin turno"}
+    tiene_turnos = (
+        "Turno" in datos_para_serie.columns
+        and bool(set(datos_para_serie["Turno"]).intersection(turnos_reconocidos))
+    )
+    if tiene_turnos:
+        columnas_serie.append("Turno")
 
     datos_diarios = (
-        datos_para_serie.groupby("Fecha", as_index=False, sort=True)["Valor"]
+        datos_para_serie.groupby(columnas_serie, as_index=False, sort=True)["Valor"]
         .mean()
     )
     fecha_inicio = pd.Timestamp(fecha_inicio_seleccionada).normalize()
@@ -212,13 +230,13 @@ def mostrar_dashboard_area(nombre_area, titulo):
 
         if parametro in PARAMETROS_ACUMULATIVOS:
             datos_serie = (
-                datos_mensuales.groupby("Fecha", as_index=False, sort=True)["Valor"]
+                datos_mensuales.groupby(columnas_serie, as_index=False, sort=True)["Valor"]
                 .sum(min_count=1)
             )
             metodo_resumen = "acumulado mensual"
         else:
             datos_serie = (
-                datos_mensuales.groupby("Fecha", as_index=False, sort=True)["Valor"]
+                datos_mensuales.groupby(columnas_serie, as_index=False, sort=True)["Valor"]
                 .mean()
             )
             metodo_resumen = "promedio mensual"
@@ -229,14 +247,20 @@ def mostrar_dashboard_area(nombre_area, titulo):
         datos_serie = datos_diarios
 
     # La tabla conserva cada registro original; solo la serie gráfica se resume.
-    datos_grafico = (
-        pd.DataFrame({"Fecha": fechas_grafico})
-        .merge(
-            datos_serie[["Fecha", "Valor"]],
-            on="Fecha",
-            how="left",
+    if tiene_turnos:
+        turnos_grafico = [
+            turno
+            for turno in ("Mañana", "Tarde", "Sin turno")
+            if turno in set(datos_serie["Turno"])
+        ]
+        calendario = pd.MultiIndex.from_product(
+            [fechas_grafico, turnos_grafico], names=["Fecha", "Turno"]
+        ).to_frame(index=False)
+        datos_grafico = calendario.merge(datos_serie, on=["Fecha", "Turno"], how="left")
+    else:
+        datos_grafico = pd.DataFrame({"Fecha": fechas_grafico}).merge(
+            datos_serie[["Fecha", "Valor"]], on="Fecha", how="left"
         )
-    )
     # Barras completan el calendario con cero; se marca qué datos son mediciones
     # reales para que esos ceros de relleno nunca aparezcan como alertas.
     datos_grafico["MedicionDisponible"] = datos_grafico["Valor"].notna()
@@ -253,38 +277,88 @@ def mostrar_dashboard_area(nombre_area, titulo):
     }
 
     if tipo_grafico == "Barras":
-        fig = px.bar(datos_grafico, **opciones)
+        opciones_barra = dict(opciones)
+        if tiene_turnos:
+            opciones_barra.update(color="Turno", color_discrete_map=colores_turnos(), barmode="group")
+        fig = px.bar(datos_grafico, **opciones_barra)
     else:
-        datos_linea = datos_serie[datos_serie["Valor"].notna()].copy()
+        # En líneas, los ceros y NaN representan ausencia de medición y no se
+        # deben convertir en caídas artificiales hasta el eje X.
+        datos_linea = datos_serie.loc[
+            datos_serie["Valor"].notna() & datos_serie["Valor"].ne(0)
+        ].copy()
 
         if datos_linea.empty:
             st.info("No hay valores disponibles para mostrar en el gráfico lineal.")
             return
 
-        fig = px.line(datos_linea, markers=True, **opciones)
+        opciones_linea = dict(opciones)
+        if tiene_turnos:
+            opciones_linea.update(color="Turno", color_discrete_map=colores_turnos())
+        fig = px.line(datos_linea, markers=True, **opciones_linea)
 
     aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad)
+    if tiene_turnos:
+        paleta_turnos = colores_turnos()
+        for trazo in fig.data:
+            if trazo.name in paleta_turnos:
+                if tipo_grafico == "Barras":
+                    trazo.marker.color = paleta_turnos[trazo.name]
+                else:
+                    trazo.line.color = paleta_turnos[trazo.name]
+                    trazo.marker.color = paleta_turnos[trazo.name]
+        fig.update_layout(legend_title_text="Turno", barmode="group")
     agregar_bandas(
         fig,
         parametro,
         limites_internos=limites_internos,
     )
+    limites_activos = obtener_limites_activos(parametro, limites_internos)
+    limites_eje_inferiores = []
+    limites_eje_superiores = []
+    normativa = obtener_banda_normativa(parametro)
+    mostrar_normativa = (
+        limites_internos is None
+        or limites_internos.get("normativa", True)
+    )
+    if normativa and mostrar_normativa:
+        if normativa.get("inferior") is not None:
+            limites_eje_inferiores.append(float(normativa["inferior"]))
+        if normativa.get("superior") is not None:
+            limites_eje_superiores.append(float(normativa["superior"]))
+    if limites_internos is not None:
+        if limites_internos.get("inferior") is not None:
+            limites_eje_inferiores.append(float(limites_internos["inferior"]))
+        if limites_internos.get("superior") is not None:
+            limites_eje_superiores.append(float(limites_internos["superior"]))
+    limites_eje = (
+        min(limites_eje_inferiores) if limites_eje_inferiores else None,
+        max(limites_eje_superiores) if limites_eje_superiores else None,
+    )
     resaltar_valores_fuera_de_rango(
         fig,
         tipo_grafico,
         datos_grafico if tipo_grafico == "Barras" else datos_linea,
-        obtener_limites_activos(parametro, limites_internos),
+        limites_activos,
         columna_medicion="MedicionDisponible" if tipo_grafico == "Barras" else None,
+        columna_turno="Turno" if tiene_turnos and tipo_grafico == "Barras" else None,
     )
 
     if mostrar_tendencia:
-        metodo_tendencia = agregar_tendencia(
+        agregar_tendencia(
             fig,
-            datos_serie,
+            datos_linea if tipo_grafico == "Líneas" else datos_serie,
             parametro,
             unidad,
         )
-        st.sidebar.caption(f"Tendencia automática: {metodo_tendencia}.")
+
+    aplicar_margen_superior_eje_y(
+        fig,
+        datos_grafico if tipo_grafico == "Barras" else datos_linea,
+        tipo_grafico,
+        limites_activos=limites_eje,
+        columna_medicion="MedicionDisponible" if tipo_grafico == "Barras" else None,
+    )
 
     dias_semana = ("L", "M", "M", "J", "V", "S", "D")
     meses_abreviados = (
@@ -313,7 +387,13 @@ def mostrar_dashboard_area(nombre_area, titulo):
         marcas_eje_x = dias
         etiquetas_eje_x = []
         for dia in dias:
-            if dia.weekday() >= 5:
+            es_feriado = dia.date() in FERIADOS_CHILE_2026
+            if es_feriado:
+                etiqueta = (
+                    f"<span style='color:#A12C32'><b>{dia.day}<br>"
+                    f"{dias_semana[dia.weekday()]}</b></span>"
+                )
+            elif dia.weekday() >= 5:
                 etiqueta = (
                     f"<span style='color:{azul_fin_semana}'><b>{dia.day}<br>"
                     f"{dias_semana[dia.weekday()]}</b></span>"
@@ -337,10 +417,10 @@ def mostrar_dashboard_area(nombre_area, titulo):
         tickvals=marcas_eje_x,
         ticktext=etiquetas_eje_x,
         tickangle=0,
-        fixedrange=True,
+        fixedrange=False,
         automargin=True,
     )
-    fig.update_yaxes(fixedrange=True)
+    fig.update_yaxes(fixedrange=False)
 
     with st.container(border=True):
         # El gráfico ocupa todo el ancho disponible y habilita scroll solo

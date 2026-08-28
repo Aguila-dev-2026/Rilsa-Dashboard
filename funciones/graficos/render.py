@@ -1,7 +1,9 @@
 """Renderizado y estilos comunes de gráficos y tablas."""
 
 import json
+import math
 
+import pandas as pd
 import streamlit.components.v1 as components
 
 from funciones.tablas import preparar_columnas_visibles
@@ -136,6 +138,8 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
             f"{parametro}: {etiqueta_valor}<extra></extra>"
         )
     )
+
+
     if tipo_grafico == "Barras":
         fig.update_traces(
             marker=dict(
@@ -200,6 +204,57 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     )
 
 
+def aplicar_margen_superior_eje_y(
+    fig,
+    datos,
+    tipo_grafico,
+    limites_activos=(None, None),
+    columna_medicion=None,
+):
+    """Añade un intervalo de eje sobre el mayor valor visible o normativo."""
+    if datos is None or "Valor" not in datos.columns:
+        return
+
+    serie = pd.to_numeric(datos["Valor"], errors="coerce")
+    if columna_medicion and columna_medicion in datos.columns:
+        serie = serie[datos[columna_medicion].astype(bool).to_numpy()]
+    serie = serie.replace([float("inf"), float("-inf")], pd.NA).dropna()
+    if serie.empty:
+        return
+
+    minimo_dato = float(serie.min())
+    maximo_dato = float(serie.max())
+    limite_inferior_banda, limite_superior_banda = limites_activos
+    maximo_referencia = maximo_dato
+    if limite_superior_banda is not None:
+        maximo_referencia = max(maximo_referencia, float(limite_superior_banda))
+
+    minimo_referencia = minimo_dato
+    if limite_inferior_banda is not None:
+        minimo_referencia = min(minimo_referencia, float(limite_inferior_banda))
+    if tipo_grafico == "Barras":
+        minimo_referencia = min(0.0, minimo_referencia)
+
+    amplitud = max(maximo_referencia - minimo_referencia, 0.0)
+    paso_aproximado = max(amplitud / 5, abs(maximo_referencia) / 10, 0.01)
+    magnitud = 10 ** math.floor(math.log10(paso_aproximado))
+    factor = paso_aproximado / magnitud
+    if factor <= 1:
+        factor_nice = 1
+    elif factor <= 2:
+        factor_nice = 2
+    elif factor <= 5:
+        factor_nice = 5
+    else:
+        factor_nice = 10
+    intervalo = factor_nice * magnitud
+    limite_superior = maximo_referencia + intervalo
+
+    fig.update_yaxes(
+        range=[minimo_referencia, limite_superior],
+        dtick=intervalo,
+    )
+
 def mostrar_grafico_desplazable(fig, cantidad_periodos):
     """Renderiza un gráfico fluido con al menos 24 px entre fechas."""
     ancho_minimo = calcular_ancho_minimo_grafico(cantidad_periodos)
@@ -246,6 +301,8 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
           width: 100%;
           overflow-x: auto;
           overflow-y: hidden;
+          touch-action: pan-x pan-y;
+          -webkit-overflow-scrolling: touch;
           padding-bottom: 8px;
           scrollbar-gutter: stable;
         }}
@@ -259,6 +316,19 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
         }}
         .js-plotly-plot .hoverlayer .axistext {{
           display: none !important;
+        }}
+        .js-plotly-plot .modebar-container,
+        .js-plotly-plot .modebar {{
+          opacity: 1 !important;
+          visibility: visible !important;
+        }}
+        /* La barra queda fija al viewport del iframe, no al lienzo ancho que
+           se desplaza horizontalmente para conservar las fechas legibles. */
+        .js-plotly-plot .modebar-container {{
+          position: fixed !important;
+          top: 8px !important;
+          right: 10px !important;
+          z-index: 20 !important;
         }}
       </style>
     </head>

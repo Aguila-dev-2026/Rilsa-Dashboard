@@ -15,10 +15,22 @@ ENTRADA_FISICO_QUIMICO = CARPETA_DATOS / "Planilla Procesos RILES.xlsx"
 ENTRADA_ANALISIS_AEROBICO = CARPETA_DATOS / "Análisis Planta Aeróbica.xlsx"
 
 SECCIONES = {
-    "⚗️ Físico-químico": ("Físico-químico", "⚗️ Físico-químico"),
-    "🚛 Planta Alta": ("Planta Alta", "🚛 Planta Alta · Afluente"),
-    "🦠 Planta Aeróbica": ("Planta Aeróbica", "🦠 Planta Aeróbica"),
-    "💧 Efluente": ("Efluente", "💧 Efluente"),
+    "\u2697\ufe0f Físico-químico": (
+        "Físico-químico",
+        "\u2697\ufe0f Físico-químico",
+    ),
+    "\U0001f69b Planta Alta": (
+        "Planta Alta",
+        "\U0001f69b Planta Alta · Afluente",
+    ),
+    "\U0001f9a0 Planta Aeróbica": (
+        "Planta Aeróbica",
+        "\U0001f9a0 Planta Aeróbica",
+    ),
+    "\U0001f4a7 Efluente": (
+        "Efluente",
+        "\U0001f4a7 Efluente",
+    ),
 }
 
 
@@ -34,7 +46,7 @@ if CONFIGURACION.es_nube and CONFIGURACION.faltantes_base_datos():
     st.error("El modo nube requiere configurar DATABASE_URL en Azure App Service.")
     st.stop()
 
-st.title("📊 Dashboard Operacional")
+st.title("\U0001f4ca Dashboard Operacional")
 
 st.sidebar.title("Menú Planta RILES")
 pagina = st.sidebar.radio(
@@ -111,7 +123,7 @@ except Exception as error:
 # Se reemplaza en cada ejecución por la selección vigente del dashboard.
 st.session_state.pop("datos_para_impresion", None)
 
-if pagina == "⚗️ Físico-químico":
+if pagina == "\u2697\ufe0f Físico-químico":
     from paginas.fisico_quimico import mostrar
 
     mostrar(datos_disponibles)

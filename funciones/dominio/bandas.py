@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from funciones.ui.tema import AZUL_CORPORATIVO, ROJO_ALERTA
+from funciones.ui.tema import AZUL_CORPORATIVO, ROJO_ALERTA, colores_turnos
 
 BANDAS_NCH1333_RIEGO = {
     "pH": {"inferior": 5.5, "superior": 9.0, "etiqueta": "Límite NCh 1333 · pH 5,5–9,0"},
@@ -52,6 +52,7 @@ def resaltar_valores_fuera_de_rango(
     datos,
     limites_activos,
     columna_medicion=None,
+    columna_turno=None,
 ):
     """Destaca en rojo las mediciones reales que exceden una banda activa."""
     limite_inferior, limite_superior = limites_activos
@@ -70,11 +71,23 @@ def resaltar_valores_fuera_de_rango(
         fuera_de_rango &= datos[columna_medicion].reset_index(drop=True).astype(bool)
 
     if tipo_grafico == "Barras":
-        colores = [
-            ROJO_ALERTA if alerta else AZUL_CORPORATIVO
-            for alerta in fuera_de_rango
-        ]
-        fig.update_traces(marker_color=colores)
+        if columna_turno and columna_turno in datos.columns:
+            mapa_turnos = colores_turnos()
+            for trazo in fig.data:
+                if trazo.name not in mapa_turnos:
+                    continue
+                pertenece = datos[columna_turno].eq(trazo.name).reset_index(drop=True)
+                trazo.marker.color = [
+                    ROJO_ALERTA if alerta else mapa_turnos[trazo.name]
+                    for alerta, es_turno in zip(fuera_de_rango, pertenece)
+                    if es_turno
+                ]
+        else:
+            colores = [
+                ROJO_ALERTA if alerta else AZUL_CORPORATIVO
+                for alerta in fuera_de_rango
+            ]
+            fig.update_traces(marker_color=colores)
         return
 
     # La línea azul permanece como contexto; solo los tramos y puntos fuera de

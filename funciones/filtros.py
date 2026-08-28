@@ -80,7 +80,7 @@ ORDEN_PUNTOS = [
 
 
 def seleccionar_rango_fecha(fecha_min, fecha_max, clave="general"):
-    """Muestra y conserva el calendario durante la sesión actual."""
+    """Muestra el calendario y conserva el rango entre contextos de la sesión."""
     fecha_min = fecha_min.date() if hasattr(fecha_min, "date") else fecha_min
     fecha_max = fecha_max.date() if hasattr(fecha_max, "date") else fecha_max
     fecha_inicio_predeterminada = max(
@@ -90,18 +90,30 @@ def seleccionar_rango_fecha(fecha_min, fecha_max, clave="general"):
     clave_inicio = f"fecha_inicio_30_dias_{clave}"
     clave_fin = f"fecha_fin_30_dias_{clave}"
 
-    # Los valores predeterminados se asignan una única vez por sesión.
-    # Streamlit elimina session_state cuando el usuario cierra la app.
-    if clave_inicio not in st.session_state:
-        st.session_state[clave_inicio] = fecha_inicio_predeterminada
-    if clave_fin not in st.session_state:
-        st.session_state[clave_fin] = fecha_max
+    clave_global_inicio = "rango_fecha_inicio_persistente"
+    clave_global_fin = "rango_fecha_fin_persistente"
+    clave_contexto_activo = "rango_fecha_contexto_activo"
 
-    st.sidebar.subheader("Período de consulta")
-    st.sidebar.caption(
-        "Registros disponibles para la selección actual: "
-        f"{fecha_min:%d/%m/%Y}–{fecha_max:%d/%m/%Y}."
-    )
+    # El primer acceso propone los últimos 30 días. Luego el rango elegido se
+    # comparte entre áreas, puntos y parámetros durante toda la sesión.
+    if clave_global_inicio not in st.session_state:
+        st.session_state[clave_global_inicio] = fecha_inicio_predeterminada
+    if clave_global_fin not in st.session_state:
+        st.session_state[clave_global_fin] = fecha_max
+
+    mismo_contexto = st.session_state.get(clave_contexto_activo) == clave
+    if mismo_contexto:
+        # En el mismo contexto, los valores de los widgets reflejan el último
+        # cambio realizado por el usuario y pasan a ser la fuente persistente.
+        if clave_inicio in st.session_state:
+            st.session_state[clave_global_inicio] = st.session_state[clave_inicio]
+        if clave_fin in st.session_state:
+            st.session_state[clave_global_fin] = st.session_state[clave_fin]
+
+    st.session_state[clave_contexto_activo] = clave
+    st.session_state[clave_inicio] = st.session_state[clave_global_inicio]
+    st.session_state[clave_fin] = st.session_state[clave_global_fin]
+
     fecha_inicio = st.sidebar.date_input(
         "Fecha inicial",
         min_value=FECHA_MINIMA_CONSULTA,
@@ -114,6 +126,9 @@ def seleccionar_rango_fecha(fecha_min, fecha_max, clave="general"):
         max_value=date.today(),
         key=clave_fin,
     )
+
+    st.session_state[clave_global_inicio] = fecha_inicio
+    st.session_state[clave_global_fin] = fecha_fin
 
     if fecha_inicio > fecha_fin:
         st.sidebar.error("La fecha inicial no puede ser posterior a la final.")
@@ -185,6 +200,46 @@ def filtrar_contexto_operacional(datos, clave):
         clave=clave,
         orden_preferido=ORDEN_PUNTOS,
     )
+
+def filtrar_por_turno(datos, clave="general"):
+    """Permite visualizar Mañana, Tarde o ambas series sin perder el turno."""
+    if "Turno" not in datos.columns:
+        return datos, "Ambas"
+
+    datos = datos.copy()
+    datos["Turno"] = datos["Turno"].fillna("").astype(str).str.strip()
+    datos["Turno"] = datos["Turno"].map(
+        lambda valor: {
+            "manana": "Mañana",
+            "mañana": "Mañana",
+            "tarde": "Tarde",
+        }.get(valor.casefold(), valor)
+    )
+    # Algunas fuentes exportan el nulo como texto literal "nan"/"none".
+    datos.loc[
+        datos["Turno"].str.casefold().isin({"nan", "none", "null"}),
+        "Turno",
+    ] = ""
+    disponibles = [turno for turno in ("Mañana", "Tarde") if turno in set(datos["Turno"])]
+    if not disponibles:
+        return datos, "Ambas"
+
+    opciones = ["Mañana", "Tarde", "Ambas"]
+    seleccion = st.sidebar.segmented_control(
+        "Turno",
+        opciones,
+        default="Ambas",
+        key=f"selector_turno_{clave}",
+    ) or "Ambas"
+    datos.loc[datos["Turno"].eq(""), "Turno"] = "Sin turno"
+    if seleccion != "Ambas":
+        categorias = [seleccion]
+        # Por criterio operativo, los registros sin turno se consideran parte
+        # de la vista Mañana, pero mantienen la categoría/color "Sin turno".
+        if seleccion == "Mañana":
+            categorias.append("Sin turno")
+        datos = datos[datos["Turno"].isin(categorias)].copy()
+    return datos, seleccion
 
 
 def filtrar_por_parametro(datos, columna_parametro="Parametro", clave="general"):

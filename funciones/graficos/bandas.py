@@ -3,6 +3,29 @@ from funciones.dominio.bandas import (
     obtener_limites_activos,
     resaltar_valores_fuera_de_rango,
 )
+from collections import Counter
+
+from funciones.persistencia_bandas import (
+    cargar_preferencias_bandas,
+    guardar_preferencia_banda,
+)
+
+
+def obtener_precision_decimal(valores, maximo=6):
+    """Infiere los decimales predominantes sin arrastrar ruido binario."""
+    precisiones = []
+    for valor in valores.dropna():
+        try:
+            numero = float(valor)
+        except (TypeError, ValueError):
+            continue
+        if numero == 0:
+            continue
+        texto = f"{numero:.{maximo}f}".rstrip("0").rstrip(".")
+        precisiones.append(len(texto.split(".")[1]) if "." in texto else 0)
+    if not precisiones:
+        return 0
+    return Counter(precisiones).most_common(1)[0][0]
 from funciones.ui.tema import ROJO_ALERTA
 
 """Bandas normativas e internas para gráficos operacionales."""
@@ -39,6 +62,18 @@ def agregar_bandas(fig, parametro, limites_internos=None):
                 annotation_position="top left",
                 annotation_font=dict(color="#4F9A75", size=12),
             )
+        elif limite_superior_norma is not None:
+            # Para normas con solo límite máximo, el rango válido parte en 0.
+            fig.add_hrect(
+                y0=min(0, limite_superior_norma),
+                y1=max(0, limite_superior_norma),
+                fillcolor="rgba(46,106,77,0.14)",
+                line_width=0,
+                layer="below",
+                annotation_text=normativa["etiqueta"],
+                annotation_position="top left",
+                annotation_font=dict(color="#4F9A75", size=12),
+            )
         for limite in (limite_inferior_norma, limite_superior_norma):
             if limite is None:
                 continue
@@ -53,7 +88,7 @@ def agregar_bandas(fig, parametro, limites_internos=None):
             if limite_inferior_norma is None:
                 opciones_linea.update(
                     annotation_text=normativa["etiqueta"],
-                    annotation_position="bottom left",
+                    annotation_position="top left",
                     annotation_font=dict(color="#4F9A75", size=12),
                     annotation_bgcolor="rgba(247,249,252,0.94)",
                     annotation_bordercolor="rgba(79,154,117,0.45)",
@@ -94,22 +129,50 @@ def agregar_bandas(fig, parametro, limites_internos=None):
             annotation_text=(f"{nombre} · {limite:,.2f}")
             if limite_inferior is None or limite_superior is None
             else None,
-            annotation_position="bottom right",
+            annotation_position=(
+                "top left" if nombre == "Banda superior" else "bottom left"
+            ),
             annotation_font=dict(color=ROJO_ALERTA, size=12),
         )
 
 
 def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
-    """Recoge bandas independientes y las conserva durante la sesión."""
+    """Recoge bandas y conserva su configuración aun después de reiniciar."""
     valores = datos["Valor"].dropna().astype(float)
     if valores.empty:
         return None
 
     minimo_observado = float(valores.min())
     maximo_observado = float(valores.max())
-    amplitud = max(maximo_observado - minimo_observado, abs(valores.mean()) * 0.1, 1)
-    paso = max(amplitud / 100, 0.01)
+    decimales = obtener_precision_decimal(valores)
+    paso = 10 ** (-decimales)
     superior_inicial = max(maximo_observado, minimo_observado + paso)
+
+    preferencias = cargar_preferencias_bandas().get(clave, {})
+    if not isinstance(preferencias, dict):
+        preferencias = {}
+
+    clave_normativa = f"mostrar_bandas_normativas_{clave}"
+    clave_inferior = f"mostrar_banda_inferior_{clave}"
+    clave_superior = f"mostrar_banda_superior_{clave}"
+    clave_valor_inferior = f"limite_interno_inferior_{clave}"
+    clave_valor_superior = f"limite_interno_superior_{clave}"
+    valor_inferior_guardado = preferencias.get("inferior")
+    valor_superior_guardado = preferencias.get("superior")
+    if not isinstance(valor_inferior_guardado, (int, float)):
+        valor_inferior_guardado = minimo_observado
+    if not isinstance(valor_superior_guardado, (int, float)):
+        valor_superior_guardado = superior_inicial
+    valores_iniciales = {
+        clave_normativa: preferencias.get("normativa", True),
+        clave_inferior: preferencias.get("mostrar_inferior", False),
+        clave_superior: preferencias.get("mostrar_superior", False),
+        clave_valor_inferior: valor_inferior_guardado,
+        clave_valor_superior: valor_superior_guardado,
+    }
+    for nombre, valor in valores_iniciales.items():
+        if nombre not in st.session_state:
+            st.session_state[nombre] = valor
 
     with st.sidebar.expander("Bandas", expanded=False):
         st.caption("Referencias normativas e internas para control operacional.")
@@ -117,37 +180,37 @@ def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
         if tiene_bandas_normativas:
             mostrar_normativa = st.toggle(
                 "Mostrar bandas normativas",
-                value=True,
-                key=f"mostrar_bandas_normativas_{clave}",
+                value=st.session_state[clave_normativa],
+                key=clave_normativa,
             )
         mostrar_inferior = st.toggle(
             "Añadir banda inferior",
-            value=False,
-            key=f"mostrar_banda_inferior_{clave}",
+            value=st.session_state[clave_inferior],
+            key=clave_inferior,
         )
         limite_inferior = None
         if mostrar_inferior:
             limite_inferior = st.number_input(
                 "Límite inferior",
-                value=minimo_observado,
+                value=st.session_state[clave_valor_inferior],
                 step=paso,
-                format="%.3f",
-                key=f"limite_interno_inferior_{clave}",
+                format=f"%.{decimales}f",
+                key=clave_valor_inferior,
             )
 
         mostrar_superior = st.toggle(
             "Añadir banda superior",
-            value=False,
-            key=f"mostrar_banda_superior_{clave}",
+            value=st.session_state[clave_superior],
+            key=clave_superior,
         )
         limite_superior = None
         if mostrar_superior:
             limite_superior = st.number_input(
                 "Límite superior",
-                value=superior_inicial,
+                value=st.session_state[clave_valor_superior],
                 step=paso,
-                format="%.3f",
-                key=f"limite_interno_superior_{clave}",
+                format=f"%.{decimales}f",
+                key=clave_valor_superior,
             )
 
         if (
@@ -155,6 +218,16 @@ def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
             and limite_superior is None
             and not tiene_bandas_normativas
         ):
+            guardar_preferencia_banda(
+                clave,
+                {
+                    "normativa": mostrar_normativa,
+                    "mostrar_inferior": mostrar_inferior,
+                    "mostrar_superior": mostrar_superior,
+                    "inferior": None,
+                    "superior": None,
+                },
+            )
             return None
         if (
             limite_inferior is not None
@@ -163,8 +236,10 @@ def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
         ):
             st.warning("El límite inferior debe ser menor que el superior.")
             return None
-        return {
+        preferencia = {
             "normativa": mostrar_normativa,
+            "mostrar_inferior": mostrar_inferior,
+            "mostrar_superior": mostrar_superior,
             "inferior": float(limite_inferior)
             if limite_inferior is not None
             else None,
@@ -172,3 +247,5 @@ def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
             if limite_superior is not None
             else None,
         }
+        guardar_preferencia_banda(clave, preferencia)
+        return preferencia
