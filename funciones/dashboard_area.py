@@ -13,7 +13,6 @@ from funciones.filtros import (
 )
 from funciones.ui.tema import (
     COBRE,
-    CONFIGURACION_GRAFICO,
     paleta_grafico,
     tema_nativo_oscuro,
 )
@@ -352,18 +351,9 @@ def mostrar_dashboard_area(nombre_area, titulo):
     fig.update_yaxes(fixedrange=True)
 
     with st.container(border=True):
-        # Entre 31 días y tres meses aún se grafican datos diarios. En ese
-        # tramo el scroll conserva separación entre fechas; desde tres meses
-        # la serie ya está resumida mensualmente y permanece responsiva.
-        if not resumen_mensual and len(fechas_grafico) > 30:
-            mostrar_grafico_desplazable(fig, len(fechas_grafico))
-        else:
-            st.plotly_chart(
-                fig,
-                width="stretch",
-                config=CONFIGURACION_GRAFICO,
-                theme="streamlit",
-            )
+        # El gráfico ocupa todo el ancho disponible y habilita scroll solo
+        # cuando sea necesario para conservar 24 px entre fechas.
+        mostrar_grafico_desplazable(fig, len(fechas_grafico))
 
     st.markdown(
         "<h3 class='riles-tabla-titulo'>Registros mostrados</h3>",

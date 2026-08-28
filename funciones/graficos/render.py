@@ -12,6 +12,19 @@ from funciones.ui.tema import (
     tema_nativo_oscuro,
 )
 
+SEPARACION_MINIMA_FECHAS_PX = 24
+MARGEN_HORIZONTAL_GRAFICO_PX = 100
+ANCHO_MINIMO_GRAFICO_PX = 320
+
+
+def calcular_ancho_minimo_grafico(cantidad_periodos):
+    """Reserva al menos 24 px entre fechas, además de los márgenes del gráfico."""
+    intervalos = max(int(cantidad_periodos) - 1, 0)
+    return max(
+        ANCHO_MINIMO_GRAFICO_PX,
+        intervalos * SEPARACION_MINIMA_FECHAS_PX + MARGEN_HORIZONTAL_GRAFICO_PX,
+    )
+
 
 def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     """Aplica el estilo visual compartido a un gráfico Plotly."""
@@ -88,8 +101,8 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
 
 
 def mostrar_grafico_desplazable(fig, cantidad_periodos):
-    """Renderiza un gráfico con scroll horizontal y tema nativo."""
-    ancho_grafico = cantidad_periodos * 24
+    """Renderiza un gráfico fluido con al menos 24 px entre fechas."""
+    ancho_minimo = calcular_ancho_minimo_grafico(cantidad_periodos)
     oscuro = tema_nativo_oscuro()
     paleta = paleta_grafico(oscuro)
     fig.update_layout(
@@ -98,9 +111,8 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
             family='"Source Sans Pro", sans-serif',
             color=paleta["texto"],
         ),
-        width=ancho_grafico,
         height=480,
-        autosize=False,
+        autosize=True,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
     )
@@ -113,9 +125,9 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
     grafico_html = fig.to_html(
         full_html=False,
         include_plotlyjs="cdn",
-        config={**CONFIGURACION_GRAFICO, "responsive": False},
+        config=CONFIGURACION_GRAFICO,
     )
-    ancho_contenido = f"{ancho_grafico}px"
+    ancho_minimo_css = f"{ancho_minimo}px"
     html = f"""
     <!doctype html>
     <html>
@@ -137,12 +149,12 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
           scrollbar-gutter: stable;
         }}
         .contenido-grafico {{
-          width: {ancho_contenido};
-          min-width: {ancho_contenido};
+          width: max(100%, {ancho_minimo_css});
+          min-width: {ancho_minimo_css};
         }}
         .contenido-grafico .plotly-graph-div {{
-          width: {ancho_contenido} !important;
-          min-width: {ancho_contenido} !important;
+          width: 100% !important;
+          min-width: {ancho_minimo_css} !important;
         }}
         .js-plotly-plot .hoverlayer .axistext {{
           display: none !important;
