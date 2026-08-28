@@ -14,20 +14,16 @@ from funciones.filtros import (
     seleccionar_rango_fecha,
 )
 from funciones.tablas import preparar_columnas_visibles
-
-
-CONFIGURACION_GRAFICO = {
-    "displayModeBar": False,
-    "scrollZoom": False,
-    "responsive": True,
-}
-
-VINO = "#6D1F2B"
-COBRE = "#B36F3D"
-AZUL_CORPORATIVO = "#147EAF"
-ROJO_ALERTA = "#A12C32"
-TINTA = "#282422"
-LINEA_SUAVE = "rgba(117,110,103,0.16)"
+from funciones.ui.tema import (
+    AZUL_BORDE,
+    AZUL_CIELO,
+    AZUL_CORPORATIVO,
+    COBRE,
+    CONFIGURACION_GRAFICO,
+    ROJO_ALERTA,
+    paleta_grafico,
+    tema_nativo_oscuro,
+)
 
 TIPO_GRAFICO_RECOMENDADO = {
     "Ingresos [Ton]": "Barras",
@@ -89,35 +85,6 @@ BANDAS_NCH1333_RIEGO = {
     "Sólidos disueltos": {"superior": 500.0, "etiqueta": "Límite NCh 1333 · Sólidos disueltos ≤ 500 mg/L"},
     "Cloruro": {"superior": 200.0, "etiqueta": "Límite NCh 1333 · Cloruro ≤ 200 mg/L"},
 }
-
-
-def tema_nativo_oscuro():
-    """Consulta el tema elegido en el selector nativo de Streamlit."""
-    try:
-        return st.context.theme.type == "dark"
-    except (AttributeError, RuntimeError):
-        return False
-
-
-def paleta_grafico(oscuro):
-    """Devuelve los colores necesarios para gráficos fuera del DOM principal."""
-    if oscuro:
-        return {
-            "template": "plotly_dark",
-            "texto": "#FAFAFA",
-            "texto_eje": "#C8CBD4",
-            "cuadricula": "rgba(250,250,250,0.14)",
-            "borde_marcador": "#0E1117",
-            "fin_semana": "#72B7E3",
-        }
-    return {
-        "template": "plotly_white",
-        "texto": "#171514",
-        "texto_eje": "#332E2A",
-        "cuadricula": "rgba(23,21,20,0.24)",
-        "borde_marcador": "#FFFDF8",
-        "fin_semana": "#4F92BD",
-    }
 
 
 def obtener_banda_normativa(parametro):
@@ -461,8 +428,6 @@ def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
 
 
 def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
-    azul_borde = "#0C638D"
-    cobre = "#D99A68"
     borde_marcador = paleta_grafico(tema_nativo_oscuro())["borde_marcador"]
 
     etiqueta_valor = f"%{{y:,.2f}} {unidad}".strip()
@@ -477,7 +442,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         fig.update_traces(
             marker=dict(
                 color=AZUL_CORPORATIVO,
-                line=dict(color=azul_borde, width=0.7),
+                line=dict(color=AZUL_BORDE, width=0.7),
             ),
             opacity=0.94,
         )
@@ -485,7 +450,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         fig.update_traces(
             line=dict(color=AZUL_CORPORATIVO, width=3.2),
             marker=dict(
-                color="#67C5E8",
+                color=AZUL_CIELO,
                 size=7,
                 line=dict(color=borde_marcador, width=1.4),
             ),

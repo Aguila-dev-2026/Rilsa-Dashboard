@@ -25,10 +25,17 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-VINO = HexColor("#6D1F2B")
-VINO_PROFUNDO = HexColor("#48121A")
-COBRE = HexColor("#B36F3D")
-TINTA = HexColor("#171514")
+from funciones.ui.tema import (
+    COBRE as COBRE_HEX,
+    TINTA_PDF as TINTA_HEX,
+    VINO as VINO_HEX,
+    VINO_PROFUNDO as VINO_PROFUNDO_HEX,
+)
+
+VINO = HexColor(VINO_HEX)
+VINO_PROFUNDO = HexColor(VINO_PROFUNDO_HEX)
+COBRE = HexColor(COBRE_HEX)
+TINTA = HexColor(TINTA_HEX)
 GRIS = HexColor("#756E67")
 PAPEL = HexColor("#F4F0E9")
 LINEA = HexColor("#DDD5CA")
