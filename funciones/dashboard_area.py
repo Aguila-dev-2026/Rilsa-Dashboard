@@ -24,6 +24,11 @@ from funciones.ui.tema import (
     paleta_grafico,
     tema_nativo_oscuro,
 )
+from funciones.graficos.render import (
+    aplicar_estilo_premium,
+    mostrar_grafico_desplazable,
+    preparar_tabla_premium,
+)
 
 TIPO_GRAFICO_RECOMENDADO = {
     "Ingresos [Ton]": "Barras",
@@ -427,79 +432,7 @@ def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
         }
 
 
-def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
-    borde_marcador = paleta_grafico(tema_nativo_oscuro())["borde_marcador"]
-
-    etiqueta_valor = f"%{{y:,.2f}} {unidad}".strip()
-    fig.update_traces(
-        hovertemplate=(
-            "<b>%{x|%d/%m/%Y}</b><br>"
-            f"{parametro}: {etiqueta_valor}<extra></extra>"
-        )
-    )
-
-    if tipo_grafico == "Barras":
-        fig.update_traces(
-            marker=dict(
-                color=AZUL_CORPORATIVO,
-                line=dict(color=AZUL_BORDE, width=0.7),
-            ),
-            opacity=0.94,
-        )
-    else:
-        fig.update_traces(
-            line=dict(color=AZUL_CORPORATIVO, width=3.2),
-            marker=dict(
-                color=AZUL_CIELO,
-                size=7,
-                line=dict(color=borde_marcador, width=1.4),
-            ),
-            fill="tozeroy",
-            fillcolor="rgba(20,126,175,0.10)",
-        )
-
-    fig.update_layout(
-        title=dict(
-            text=f"<b>{parametro}</b>",
-            x=0.015,
-            xanchor="left",
-            font=dict(size=21),
-        ),
-        font=dict(family='"Source Sans Pro", sans-serif'),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        hoverlabel=dict(
-            bgcolor="#40566C",
-            bordercolor="#172C50",
-            font=dict(color="#FFFFFF", size=13),
-            align="left",
-            namelength=-1,
-        ),
-        hovermode="x unified",
-        bargap=0.28,
-        barcornerradius=6,
-        margin=dict(l=82, r=18, t=78, b=92),
-    )
-    fig.update_xaxes(
-        title=None,
-        showgrid=False,
-        showline=True,
-        linewidth=1,
-        tickfont=dict(size=12),
-    )
-    fig.update_yaxes(
-        title=f"Valor ({unidad})" if unidad else "Valor",
-        showgrid=True,
-        gridwidth=1,
-        zeroline=False,
-        showline=False,
-        tickfont=dict(size=12),
-        title_font=dict(size=12),
-        title_standoff=22,
-        automargin=True,
-    )
-
-def mostrar_grafico_desplazable(fig, cantidad_periodos):
+def _mostrar_grafico_desplazable_legacy(fig, cantidad_periodos):
     """Replica el tema nativo dentro del iframe y añade scroll horizontal."""
     ancho_grafico = cantidad_periodos * 24
     oscuro = tema_nativo_oscuro()
@@ -569,30 +502,6 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
 
 
 
-
-
-def preparar_tabla_premium(datos):
-    tabla = (
-        preparar_columnas_visibles(datos)
-        .sort_values("Fecha", ascending=False)
-        .rename(
-            columns={
-                "Area": "Área",
-                "Parametro": "Parámetro",
-            }
-        )
-        .reset_index(drop=True)
-    )
-
-    # Los fondos y encabezados quedan a cargo del tema nativo de Streamlit.
-    return (
-        tabla.style
-        .set_properties(
-            subset=["Valor"],
-            **{"font-weight": "700"},
-        )
-        .format({"Valor": "{:,.2f}"}, na_rep="—")
-    )
 
 
 def mostrar_dashboard_area(nombre_area, titulo):
