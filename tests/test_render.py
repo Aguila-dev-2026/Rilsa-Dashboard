@@ -35,6 +35,10 @@ class RenderGraficoTest(unittest.TestCase):
         html = renderizar_html.call_args.args[0]
         self.assertIn("width: max(100%, 820px)", html)
         self.assertIn("min-width: 820px", html)
+        self.assertIn("window.parent.document", html)
+        self.assertIn("window.Plotly.relayout", html)
+        self.assertIn('"texto": "#FAFAFA"', html)
+        self.assertIn('"texto_eje": "#C8CBD4"', html)
 
 
 if __name__ == "__main__":

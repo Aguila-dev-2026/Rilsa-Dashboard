@@ -1,5 +1,7 @@
 """Renderizado y estilos comunes de gráficos y tablas."""
 
+import json
+
 import streamlit.components.v1 as components
 
 from funciones.tablas import preparar_columnas_visibles
@@ -15,6 +17,104 @@ from funciones.ui.tema import (
 SEPARACION_MINIMA_FECHAS_PX = 24
 MARGEN_HORIZONTAL_GRAFICO_PX = 100
 ANCHO_MINIMO_GRAFICO_PX = 320
+
+_SCRIPT_TEMA_CLIENTE = r"""
+<script>
+(() => {
+  const paletas = __PALETAS__;
+  let temaOscuroAnterior = null;
+  let temporizador = null;
+
+  function leerColorFondo() {
+    const documentoPadre = window.parent.document;
+    const candidatos = [
+      documentoPadre.querySelector('[data-testid="stAppViewContainer"]'),
+      documentoPadre.querySelector('.stApp'),
+      documentoPadre.body,
+      documentoPadre.documentElement,
+    ];
+
+    for (const elemento of candidatos) {
+      if (!elemento) continue;
+      const color = window.parent.getComputedStyle(elemento).backgroundColor;
+      const componentes = color.match(/[\d.]+/g);
+      if (!componentes || componentes.length < 3) continue;
+      const [rojo, verde, azul, alfa = 1] = componentes.map(Number);
+      if (alfa === 0) continue;
+      return [rojo, verde, azul];
+    }
+    return null;
+  }
+
+  function detectarTemaOscuro() {
+    try {
+      const color = leerColorFondo();
+      if (color) {
+        const [rojo, verde, azul] = color;
+        const luminancia = 0.2126 * rojo + 0.7152 * verde + 0.0722 * azul;
+        return luminancia < 128;
+      }
+    } catch (_error) {
+      // Algunos navegadores aíslan el iframe; se usa la preferencia del sistema.
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function aplicarTema(forzar = false) {
+    const grafico = document.querySelector('.plotly-graph-div');
+    if (!grafico || !window.Plotly || !grafico._fullLayout) return false;
+
+    const oscuro = detectarTemaOscuro();
+    if (!forzar && oscuro === temaOscuroAnterior) return true;
+    temaOscuroAnterior = oscuro;
+    const paleta = oscuro ? paletas.oscura : paletas.clara;
+    const esquema = oscuro ? 'dark' : 'light';
+    document.documentElement.style.colorScheme = esquema;
+    document.body.style.colorScheme = esquema;
+
+    window.Plotly.relayout(grafico, {
+      'font.color': paleta.texto,
+      'title.font.color': paleta.texto,
+      'legend.font.color': paleta.texto,
+      'xaxis.tickfont.color': paleta.texto_eje,
+      'xaxis.linecolor': paleta.texto_eje,
+      'xaxis.tickcolor': paleta.texto_eje,
+      'yaxis.tickfont.color': paleta.texto_eje,
+      'yaxis.title.font.color': paleta.texto_eje,
+      'yaxis.gridcolor': paleta.cuadricula,
+    });
+    return true;
+  }
+
+  function iniciar(intentos = 0) {
+    if (!aplicarTema(true)) {
+      if (intentos < 120) {
+        window.requestAnimationFrame(() => iniciar(intentos + 1));
+      }
+      return;
+    }
+    temporizador = window.setInterval(() => aplicarTema(false), 500);
+  }
+
+  window.addEventListener('beforeunload', () => {
+    if (temporizador !== null) window.clearInterval(temporizador);
+  });
+  iniciar();
+})();
+</script>
+"""
+
+
+def _script_tema_cliente():
+    """Genera el detector de tema del navegador con la paleta centralizada."""
+    paletas = {
+        "clara": paleta_grafico(False),
+        "oscura": paleta_grafico(True),
+    }
+    return _SCRIPT_TEMA_CLIENTE.replace(
+        "__PALETAS__",
+        json.dumps(paletas, ensure_ascii=False),
+    )
 
 
 def calcular_ancho_minimo_grafico(cantidad_periodos):
@@ -128,6 +228,7 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
         config=CONFIGURACION_GRAFICO,
     )
     ancho_minimo_css = f"{ancho_minimo}px"
+    script_tema = _script_tema_cliente()
     html = f"""
     <!doctype html>
     <html>
@@ -165,6 +266,7 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
       <div class="contenedor-grafico">
         <div class="contenido-grafico">{grafico_html}</div>
       </div>
+      {script_tema}
     </body>
     </html>
     """
