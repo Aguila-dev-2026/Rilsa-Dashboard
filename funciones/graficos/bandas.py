@@ -3,6 +3,7 @@ from funciones.dominio.bandas import (
     obtener_limites_activos,
     resaltar_valores_fuera_de_rango,
 )
+from funciones.ui.tema import ROJO_ALERTA
 
 """Bandas normativas e internas para gráficos operacionales."""
 
@@ -171,4 +172,3 @@ def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
             if limite_superior is not None
             else None,
         }
-

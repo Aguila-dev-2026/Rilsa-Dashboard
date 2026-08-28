@@ -12,9 +12,12 @@ from funciones.filtros import (
     seleccionar_rango_fecha,
 )
 from funciones.ui.tema import (
+    COBRE,
+    CONFIGURACION_GRAFICO,
     paleta_grafico,
     tema_nativo_oscuro,
 )
+from funciones.dominio.tendencias import PARAMETROS_ACUMULATIVOS
 from funciones.graficos.render import (
     aplicar_estilo_premium,
     mostrar_grafico_desplazable,
