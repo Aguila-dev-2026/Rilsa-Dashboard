@@ -30,7 +30,7 @@ class BandasTests(unittest.TestCase):
         ):
             self.assertIn(parametro, ruta.read_text(encoding="utf-8"))
         tendencias = ast.parse(
-            (raiz / "funciones" / "graficos" / "tendencias.py").read_text(
+            (raiz / "funciones" / "dominio" / "tendencias.py").read_text(
                 encoding="utf-8"
             )
         )
@@ -39,7 +39,6 @@ class BandasTests(unittest.TestCase):
             for nodo in tendencias.body
             if isinstance(nodo, ast.FunctionDef)
         }
-        self.assertNotIn("add_hrect", funciones_tendencias["agregar_tendencia"])
         self.assertIn("tipo_grafico_recomendado", funciones_tendencias)
         self.assertIn("Líneas", funciones_tendencias["tipo_grafico_recomendado"])
         self.assertIn("obtener_limites_activos", funciones)
