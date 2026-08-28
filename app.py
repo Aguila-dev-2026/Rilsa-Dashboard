@@ -112,26 +112,14 @@ except Exception as error:
 st.session_state.pop("datos_para_impresion", None)
 
 if pagina == "⚗️ Físico-químico":
-    if not datos_disponibles:
-        st.header("⚗️ Físico-químico")
-        st.info(
-            "Aún no hay datos sincronizados en la fuente activa."
-        )
-    else:
-        from dashboards.fisico_quimico import mostrar_fisico_quimico
+    from paginas.fisico_quimico import mostrar
 
-        mostrar_fisico_quimico()
+    mostrar(datos_disponibles)
 else:
     nombre_area, titulo = SECCIONES[pagina]
-    if not datos_disponibles:
-        st.header(titulo)
-        st.info(
-            "Aún no hay datos sincronizados para esta sección."
-        )
-    else:
-        from funciones.dashboard_area import mostrar_dashboard_area
+    from paginas.areas import mostrar
 
-        mostrar_dashboard_area(nombre_area=nombre_area, titulo=titulo)
+    mostrar(nombre_area, titulo, datos_disponibles)
 
 datos_para_impresion = st.session_state.get("datos_para_impresion")
 if datos_para_impresion is not None:
