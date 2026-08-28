@@ -50,7 +50,7 @@ if CONFIGURACION.es_nube and CONFIGURACION.faltantes_base_datos():
 st.title("📊 Dashboard Operacional Planta RILES")
 
 st.sidebar.title("Menú Planta RILES")
-aplicar_identidad_volta()
+aplicar_detalles_grafico()
 pagina = st.sidebar.radio(
     "Selecciona una sección",
     list(SECCIONES),
