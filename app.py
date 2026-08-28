@@ -3,6 +3,7 @@ from pathlib import Path
 import streamlit as st
 
 from funciones.configuracion import obtener_configuracion
+from funciones.ui.componentes import aplicar_detalles_grafico, mostrar_ruta_origen
 
 RAIZ_PROYECTO = Path(__file__).resolve().parent
 CARPETA_DATOS = RAIZ_PROYECTO / "datos"
@@ -18,24 +19,6 @@ SECCIONES = {
 
 
 st.set_page_config(page_title="Planta RILES", layout="wide")
-
-
-def aplicar_detalles_grafico():
-    """Conserva retoques neutrales sin interferir con el tema nativo."""
-    st.html(
-        """
-        <style>
-          .js-plotly-plot .hoverlayer .bg {
-            stroke-width: 3px !important;
-            rx: 7px;
-            ry: 7px;
-          }
-          .js-plotly-plot .hoverlayer .axistext {
-            display: none !important;
-          }
-        </style>
-        """
-    )
 
 
 aplicar_detalles_grafico()
@@ -108,11 +91,6 @@ if mostrar_actualizacion and st.sidebar.button(
         st.rerun()
 elif CONFIGURACION.es_nube:
     st.sidebar.info("Datos centralizados y sincronizados desde SharePoint.")
-
-def mostrar_ruta_origen(ruta):
-    ruta = Path(ruta)
-    return ruta.relative_to(Path.cwd()) if ruta.is_relative_to(Path.cwd()) else ruta
-
 
 if CONFIGURACION.es_nube:
     st.sidebar.caption("Origen: SharePoint · almacenamiento: PostgreSQL")
