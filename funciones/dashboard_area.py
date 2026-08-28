@@ -295,7 +295,6 @@ def mostrar_dashboard_area(nombre_area, titulo):
         )
         st.sidebar.caption(f"Tendencia automática: {metodo_tendencia}.")
 
-    dias_semana = ("L", "M", "M", "J", "V", "S", "D")
     meses_abreviados = (
         "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
         "JUL", "AGO", "SEP", "OCT", "NOV", "DIC",
@@ -318,24 +317,11 @@ def mostrar_dashboard_area(nombre_area, titulo):
         margen_lateral = pd.Timedelta(hours=12)
         inicio_eje = fecha_inicio
         fin_eje = fecha_fin
-        azul_fin_semana = paleta_grafico(tema_nativo_oscuro())["fin_semana"]
         marcas_eje_x = dias
-        etiquetas_eje_x = []
-        for dia in dias:
-            if dia.weekday() >= 5:
-                etiqueta = (
-                    f"<span style='color:{azul_fin_semana}'><b>{dia.day}<br>"
-                    f"{dias_semana[dia.weekday()]}</b></span>"
-                )
-            else:
-                etiqueta = f"{dia.day}<br>{dias_semana[dia.weekday()]}"
-
-            if dia.day == 1:
-                etiqueta += (
-                    f"<br><span style='color:{COBRE}'><b>"
-                    f"{meses_abreviados[dia.month - 1]}</b></span>"
-                )
-            etiquetas_eje_x.append(etiqueta)
+        # Se muestra únicamente el número del día. El tooltip conserva la
+        # fecha completa, por lo que no es necesario añadir letras o saltos
+        # de línea al eje X.
+        etiquetas_eje_x = [str(dia.day) for dia in dias]
 
     fig.update_xaxes(
         range=[
