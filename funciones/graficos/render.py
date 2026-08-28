@@ -59,7 +59,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
             align="left",
             namelength=-1,
         ),
-        hovermode="x unified",
+        hovermode="closest",
         bargap=0.28,
         barcornerradius=6,
         margin=dict(l=82, r=18, t=78, b=92),
