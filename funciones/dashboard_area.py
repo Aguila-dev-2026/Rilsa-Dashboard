@@ -182,12 +182,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
 
     # Primero se consolida cada día para que las mediciones Mañana/Tarde
     # no se dupliquen al construir un total mensual.
-    datos_para_serie = datos_filtrados
-    if tipo_grafico == "Líneas":
-        datos_para_serie = datos_para_serie[
-            datos_para_serie["Valor"].notna()
-            & datos_para_serie["Valor"].ne(0)
-        ]
+    datos_para_serie = datos_filtrados[datos_filtrados["Valor"].notna()].copy()
 
     datos_diarios = (
         datos_para_serie.groupby("Fecha", as_index=False, sort=True)["Valor"]
@@ -260,13 +255,10 @@ def mostrar_dashboard_area(nombre_area, titulo):
     if tipo_grafico == "Barras":
         fig = px.bar(datos_grafico, **opciones)
     else:
-        datos_linea = datos_serie[
-            datos_serie["Valor"].notna()
-            & datos_serie["Valor"].ne(0)
-        ].copy()
+        datos_linea = datos_serie[datos_serie["Valor"].notna()].copy()
 
         if datos_linea.empty:
-            st.info("No hay valores distintos de cero para mostrar en el gráfico lineal.")
+            st.info("No hay valores disponibles para mostrar en el gráfico lineal.")
             return
 
         fig = px.line(datos_linea, markers=True, **opciones)

@@ -70,7 +70,7 @@ def calcular_tendencia(datos, parametro, unidad=""):
     """Calcula la tendencia recomendada usando solo valores válidos del filtro."""
     validos = (
         datos.loc[
-            datos["Valor"].notna() & datos["Valor"].ne(0),
+            datos["Valor"].notna(),
             ["Fecha", "Valor"],
         ]
         .sort_values("Fecha")
@@ -117,4 +117,3 @@ def calcular_tendencia(datos, parametro, unidad=""):
     tendencia = validos[["Fecha"]].copy()
     tendencia["Tendencia"] = intercepto + pendiente * x
     return tendencia, metodo
-
