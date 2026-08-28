@@ -7,14 +7,6 @@ def estilos_impresion_dashboard() -> str:
     <style>
       @media print {
         @page { size: auto; margin: 14mm; }
-        :root {
-          --fondo: #FFFFFF !important;
-          --panel: #FFFFFF !important;
-          --panel-sec: #FFFFFF !important;
-          --texto: #171514 !important;
-          --muted: #52627C !important;
-          --linea: #DCE5EF !important;
-        }
         html, body {
           background: #fff !important;
           color: #171514 !important;
@@ -51,20 +43,6 @@ def estilos_impresion_dashboard() -> str:
         [data-testid='stAppViewContainer'] .block-container {
           background: #fff !important;
           color: #171514 !important;
-        }
-        [data-testid='stMetric'],
-        [data-testid='stVerticalBlockBorderWrapper'],
-        [data-testid='stPlotlyChart'] {
-          background: #fff !important;
-          border-color: #DCE5EF !important;
-          box-shadow: none !important;
-        }
-        .js-plotly-plot .xtick text,
-        .js-plotly-plot .ytick text,
-        .js-plotly-plot .gtitle,
-        .js-plotly-plot .legendtext,
-        .js-plotly-plot .ytitle {
-          fill: #332E2A !important;
         }
       }
     </style>
