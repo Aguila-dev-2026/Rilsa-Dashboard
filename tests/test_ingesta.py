@@ -1,5 +1,7 @@
 import unittest
 from pathlib import Path
+import subprocess
+import sys
 
 import pandas as pd
 
@@ -8,6 +10,17 @@ from ingesta.validaciones import validar_datos
 
 
 class IngestaTest(unittest.TestCase):
+    def test_importador_cli_no_tiene_importacion_circular(self):
+        raiz = Path(__file__).resolve().parents[1]
+        resultado = subprocess.run(
+            [sys.executable, "-c", "import importar"],
+            cwd=raiz,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(resultado.returncode, 0, resultado.stderr)
+
     def test_normaliza_nombres_y_numeros(self):
         self.assertEqual(normalizar_nombre("  Energía   Eléctrica "), "energia electrica")
         resultado = convertir_a_numero(pd.Series(["1.234,5", "-", 2]))
