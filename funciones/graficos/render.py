@@ -137,6 +137,9 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
           width: {ancho_contenido};
           min-width: {ancho_contenido};
         }}
+        .js-plotly-plot .hoverlayer .axistext {{
+          display: none !important;
+        }}
       </style>
     </head>
     <body>
