@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import argparse
 import re
-import unicodedata
 from pathlib import Path
 
 import pandas as pd
+
+from ingesta.comun import convertir_a_numero, normalizar_nombre
 
 
 RAIZ_PROYECTO = Path(__file__).resolve().parent
@@ -35,35 +36,6 @@ COLUMNAS_PERMITIDAS = {
     "[m3]": "Volumen TK3 [m3]",
 }
 
-
-def normalizar_nombre(valor: object) -> str:
-    texto = unicodedata.normalize("NFD", str(valor))
-    texto = "".join(
-        caracter for caracter in texto if unicodedata.category(caracter) != "Mn"
-    )
-    return re.sub(r"\s+", " ", texto.strip().lower())
-
-
-def convertir_a_numero(serie: pd.Series) -> pd.Series:
-    """Convierte números Excel y texto con coma decimal de forma compatible."""
-
-    def convertir_valor(valor: object) -> float:
-        if pd.isna(valor):
-            return float("nan")
-
-        if isinstance(valor, (int, float)):
-            return float(valor)
-
-        texto = str(valor).strip().replace("\u00a0", "")
-        if "," in texto:
-            texto = texto.replace(".", "").replace(",", ".")
-
-        try:
-            return float(texto)
-        except ValueError:
-            return float("nan")
-
-    return serie.map(convertir_valor).astype("float64")
 
 def unidad_de(parametro: str) -> str:
     coincidencia = re.search(r"\[([^\]]+)\]", parametro)

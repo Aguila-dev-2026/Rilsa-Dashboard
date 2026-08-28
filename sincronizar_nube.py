@@ -13,8 +13,8 @@ from funciones.postgres import (
     reemplazar_mediciones,
 )
 from funciones.sharepoint import descargar_planillas_sharepoint
-from importar import importar_fisico_quimico
-from importar_analisis_aerobico import importar_analisis_aerobico
+from ingesta.aerobico import importar_analisis_aerobico
+from ingesta.fisico_quimico import importar_fisico_quimico
 
 
 def sincronizar_datos_nube() -> dict:

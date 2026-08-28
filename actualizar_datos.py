@@ -7,7 +7,6 @@ temporal durante la migración.
 
 from __future__ import annotations
 
-import hashlib
 import os
 import shutil
 import sqlite3
@@ -16,14 +15,16 @@ from pathlib import Path
 
 import pandas as pd
 
-from importar import (
-    ENTRADA_PREDETERMINADA as ENTRADA_FISICO_QUIMICO,
-    importar_fisico_quimico,
-)
-from importar_analisis_aerobico import (
+from ingesta.aerobico import (
     ENTRADA_PREDETERMINADA as ENTRADA_ANALISIS_AEROBICO,
     importar_analisis_aerobico,
 )
+from ingesta.comun import huella_archivo
+from ingesta.fisico_quimico import (
+    ENTRADA_PREDETERMINADA as ENTRADA_FISICO_QUIMICO,
+    importar_fisico_quimico,
+)
+from ingesta.validaciones import validar_datos as validar_datos_comun
 
 
 RAIZ_PROYECTO = Path(__file__).resolve().parent
@@ -53,25 +54,6 @@ COLUMNAS_MEDICIONES = [
     "Fuente",
     "Hoja",
 ]
-
-
-def huella_archivo(ruta: Path) -> dict:
-    if not ruta.exists():
-        raise FileNotFoundError(f"No existe la planilla de origen: {ruta}")
-
-    digest = hashlib.sha256()
-    with ruta.open("rb") as archivo:
-        for bloque in iter(lambda: archivo.read(1024 * 1024), b""):
-            digest.update(bloque)
-
-    estado = ruta.stat()
-    return {
-        "Nombre": ruta.name,
-        "Ruta": str(ruta),
-        "SHA256": digest.hexdigest(),
-        "Tamano": estado.st_size,
-        "MtimeNS": estado.st_mtime_ns,
-    }
 
 
 def base_vigente_y_sin_cambios(huellas: list[dict]) -> bool:
@@ -190,33 +172,12 @@ def conteos_base(ruta: Path) -> dict[str, int]:
 
 
 def validar_datos(datos: pd.DataFrame, conteos_anteriores: dict[str, int]) -> None:
-    faltantes = set(COLUMNAS_MEDICIONES).difference(datos.columns)
-    if faltantes:
-        raise ValueError(f"Faltan columnas normalizadas: {', '.join(sorted(faltantes))}")
-    if datos.empty:
-        raise ValueError("La actualización no produjo mediciones.")
-
-    esperadas = {"Físico-químico", "Planta Alta", "Planta Aeróbica", "Efluente"}
-    faltan_areas = esperadas.difference(datos["Area"].unique())
-    if faltan_areas:
-        raise ValueError(f"La actualización perdió áreas: {', '.join(sorted(faltan_areas))}")
-
-    claves = ["Fecha", "Area", "Punto", "Turno", "Parametro"]
-    if datos[claves + ["Valor"]].isna().any().any():
-        raise ValueError("Existen campos obligatorios vacíos en la actualización.")
-    if datos.duplicated(claves).any():
-        raise ValueError("La actualización contiene mediciones duplicadas.")
-    if (datos["Fecha"] > pd.Timestamp.today().normalize()).any():
-        raise ValueError("La actualización contiene fechas futuras.")
-
-    conteos_nuevos = datos.groupby("Area").size().to_dict()
-    for area, cantidad_anterior in conteos_anteriores.items():
-        cantidad_nueva = int(conteos_nuevos.get(area, 0))
-        if cantidad_anterior >= 20 and cantidad_nueva < cantidad_anterior * 0.8:
-            raise ValueError(
-                f"La cantidad de registros de {area} cayó más de 20 % "
-                f"({cantidad_anterior} → {cantidad_nueva})."
-            )
+    validar_datos_comun(
+        datos,
+        conteos_anteriores,
+        columnas_mediciones=COLUMNAS_MEDICIONES,
+        areas_esperadas={"Físico-químico", "Planta Alta", "Planta Aeróbica", "Efluente"},
+    )
 
 
 def construir_sqlite(
