@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rilsa-dashboard"
+version = "0.1.0"
+description = "Dashboard operacional para la planta RILES"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=3.0,<4",
+    "openpyxl>=3.1,<4",
+    "plotly>=7,<8",
+    "streamlit>=1.62,<2",
+    "reportlab>=4.4,<5",
+]
+
+[project.scripts]
+rilsa-actualizar = "actualizar_datos:actualizar_datos"
+
+[tool.setuptools]
+include-package-data = true
+py-modules = [
+    "app",
+    "actualizar_datos",
+    "importar",
+    "importar_analisis_aerobico",
+    "sincronizar_nube",
+    "tasks",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["funciones*", "dashboards*", "paginas*", "ingesta*", "rilsa_dashboard*"]
+exclude = ["tests*", ".venv*", "datos*", "datos_generados*"]

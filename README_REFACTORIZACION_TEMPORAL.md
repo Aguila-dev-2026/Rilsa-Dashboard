@@ -194,4 +194,4 @@ Commit sugerido: `Convertir el proyecto en un paquete explícito`.
 - [x] Etapa 4 — Extraer componentes reutilizables
 - [x] Etapa 5 — Separar páginas
 - [x] Etapa 6 — Reorganizar ingesta
-- [ ] Etapa 7 — Evaluar paquete `src/`
+- [x] Etapa 7 — Preparar paquete instalable y namespace público
