@@ -47,7 +47,7 @@ if CONFIGURACION.es_nube and CONFIGURACION.faltantes_base_datos():
     st.error("El modo nube requiere configurar DATABASE_URL en Azure App Service.")
     st.stop()
 
-st.title("📊 Dashboard Operacional Planta RILES")
+st.title("📊 Dashboard Operacional")
 
 st.sidebar.title("Menú Planta RILES")
 pagina = st.sidebar.radio(
