@@ -25,7 +25,7 @@ def aplicar_identidad_volta(tema):
     oscuro = tema == "Oscuro"
     variables = (
         {
-            "fondo": "#111A24", "panel": "#1B2A38", "panel_sec": "#233646",
+            "fondo": "#000000", "panel": "#1B2A38", "panel_sec": "#233646",
             "texto": "#F1F6FA", "muted": "#B7C8D6", "linea": "#385064",
             "sidebar": "#0C1420", "sidebar_panel": "#172333", "azul": "#3FA9D5",
             "celeste": "#7DD8F3", "azul_hover": "#2C8FBC",
@@ -46,7 +46,13 @@ def aplicar_identidad_volta(tema):
         + "; --azul-hover:" + variables["azul_hover"] + "; }</style>"""
         + """
         <style>
-          [data-testid="stAppViewContainer"] { background: var(--fondo); }
+          [data-testid="stAppViewContainer"],
+          [data-testid="stApp"],
+          [data-testid="stMain"],
+          [data-testid="stAppViewContainer"] .main,
+          [data-testid="stAppViewContainer"] .block-container {
+            background: var(--fondo) !important;
+          }
           [data-testid="stSidebar"] { background: var(--sidebar); }
           [data-testid="stSidebar"] h1,
           [data-testid="stSidebar"] h2,
