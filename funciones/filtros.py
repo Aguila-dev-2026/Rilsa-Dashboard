@@ -1,6 +1,9 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 import streamlit as st
+
+
+FECHA_MINIMA_CONSULTA = date(2020, 1, 1)
 
 
 # Orden operativo: parámetros físico-químicos actuales y luego variables de
@@ -95,16 +98,20 @@ def seleccionar_rango_fecha(fecha_min, fecha_max, clave="general"):
         st.session_state[clave_fin] = fecha_max
 
     st.sidebar.subheader("Período de consulta")
+    st.sidebar.caption(
+        "Registros disponibles para la selección actual: "
+        f"{fecha_min:%d/%m/%Y}–{fecha_max:%d/%m/%Y}."
+    )
     fecha_inicio = st.sidebar.date_input(
         "Fecha inicial",
-        min_value=fecha_min,
-        max_value=fecha_max,
+        min_value=FECHA_MINIMA_CONSULTA,
+        max_value=date.today(),
         key=clave_inicio,
     )
     fecha_fin = st.sidebar.date_input(
         "Fecha final",
-        min_value=fecha_min,
-        max_value=fecha_max,
+        min_value=FECHA_MINIMA_CONSULTA,
+        max_value=date.today(),
         key=clave_fin,
     )
 
