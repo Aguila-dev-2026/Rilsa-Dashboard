@@ -91,6 +91,35 @@ BANDAS_NCH1333_RIEGO = {
 }
 
 
+def tema_nativo_oscuro():
+    """Consulta el tema elegido en el selector nativo de Streamlit."""
+    try:
+        return st.context.theme.type == "dark"
+    except (AttributeError, RuntimeError):
+        return False
+
+
+def paleta_grafico(oscuro):
+    """Devuelve los colores necesarios para gráficos fuera del DOM principal."""
+    if oscuro:
+        return {
+            "template": "plotly_dark",
+            "texto": "#FAFAFA",
+            "texto_eje": "#C8CBD4",
+            "cuadricula": "rgba(250,250,250,0.14)",
+            "borde_marcador": "#0E1117",
+            "fin_semana": "#72B7E3",
+        }
+    return {
+        "template": "plotly_white",
+        "texto": "#171514",
+        "texto_eje": "#332E2A",
+        "cuadricula": "rgba(23,21,20,0.24)",
+        "borde_marcador": "#FFFDF8",
+        "fin_semana": "#4F92BD",
+    }
+
+
 def obtener_banda_normativa(parametro):
     return BANDAS_NCH1333_RIEGO.get(parametro)
 
@@ -434,9 +463,7 @@ def configurar_bandas(datos, clave, tiene_bandas_normativas=False):
 def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     azul_borde = "#0C638D"
     cobre = "#D99A68"
-    texto = "#171514"
-    texto_eje = "#332E2A"
-    cuadricula = "rgba(23,21,20,0.24)"
+    borde_marcador = paleta_grafico(tema_nativo_oscuro())["borde_marcador"]
 
     etiqueta_valor = f"%{{y:,.2f}} {unidad}".strip()
     fig.update_traces(
@@ -460,7 +487,7 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
             marker=dict(
                 color="#67C5E8",
                 size=7,
-                line=dict(color="#FFFDF8", width=1.4),
+                line=dict(color=borde_marcador, width=1.4),
             ),
             fill="tozeroy",
             fillcolor="rgba(20,126,175,0.10)",
@@ -471,12 +498,9 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
             text=f"<b>{parametro}</b>",
             x=0.015,
             xanchor="left",
-            font=dict(size=21, color=texto),
+            font=dict(size=21),
         ),
-        font=dict(
-            family='"Source Sans Pro", sans-serif',
-            color=texto,
-        ),
+        font=dict(family='"Source Sans Pro", sans-serif'),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         hoverlabel=dict(
@@ -496,42 +520,43 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
         showgrid=False,
         showline=True,
         linewidth=1,
-        tickfont=dict(size=12, color=texto_eje),
+        tickfont=dict(size=12),
     )
     fig.update_yaxes(
         title=f"Valor ({unidad})" if unidad else "Valor",
         showgrid=True,
         gridwidth=1,
-        gridcolor=cuadricula,
         zeroline=False,
         showline=False,
-        tickfont=dict(size=12, color=texto_eje),
-        title_font=dict(size=12, color=texto_eje),
+        tickfont=dict(size=12),
+        title_font=dict(size=12),
         title_standoff=22,
         automargin=True,
     )
 
 def mostrar_grafico_desplazable(fig, cantidad_periodos):
-    """Mantiene el gráfico claro y añade scroll desde el período visible 32."""
+    """Replica el tema nativo dentro del iframe y añade scroll horizontal."""
     ancho_grafico = cantidad_periodos * 24
-    texto = "#171514"
-    texto_eje = "#332E2A"
-    cuadricula = "rgba(23,21,20,0.24)"
+    oscuro = tema_nativo_oscuro()
+    paleta = paleta_grafico(oscuro)
 
     fig.update_layout(
-        template="plotly_white",
-        font=dict(family='"Source Sans Pro", sans-serif', color=texto),
+        template=paleta["template"],
+        font=dict(
+            family='"Source Sans Pro", sans-serif',
+            color=paleta["texto"],
+        ),
         width=ancho_grafico,
         height=480,
         autosize=False,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
     )
-    fig.update_xaxes(tickfont=dict(size=12, color=texto_eje))
+    fig.update_xaxes(tickfont=dict(size=12, color=paleta["texto_eje"]))
     fig.update_yaxes(
-        tickfont=dict(size=12, color=texto_eje),
-        title_font=dict(size=12, color=texto_eje),
-        gridcolor=cuadricula,
+        tickfont=dict(size=12, color=paleta["texto_eje"]),
+        title_font=dict(size=12, color=paleta["texto_eje"]),
+        gridcolor=paleta["cuadricula"],
     )
 
     grafico_html = fig.to_html(
@@ -551,6 +576,8 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
           width: 100%;
           margin: 0;
           padding: 0;
+          background: transparent;
+          color-scheme: {"dark" if oscuro else "light"};
           overflow: hidden;
         }}
         .contenedor-grafico {{
@@ -592,7 +619,7 @@ def preparar_tabla_premium(datos):
         .reset_index(drop=True)
     )
 
-    # La aplicación utiliza una sola paleta clara definida en config.toml.
+    # Los fondos y encabezados quedan a cargo del tema nativo de Streamlit.
     return (
         tabla.style
         .set_properties(
@@ -852,7 +879,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
         margen_lateral = pd.Timedelta(hours=12)
         inicio_eje = fecha_inicio
         fin_eje = fecha_fin
-        azul_fin_semana = "#4F92BD"
+        azul_fin_semana = paleta_grafico(tema_nativo_oscuro())["fin_semana"]
         marcas_eje_x = dias
         etiquetas_eje_x = []
         for dia in dias:

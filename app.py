@@ -20,57 +20,11 @@ SECCIONES = {
 st.set_page_config(page_title="Planta RILES", layout="wide")
 
 
-def aplicar_identidad_volta():
-    """Aplica la identidad visual clara del dashboard."""
+def aplicar_detalles_grafico():
+    """Conserva retoques neutrales sin interferir con el tema nativo."""
     st.html(
         """
         <style>
-          [data-testid="stAppViewContainer"] { background: #F7F9FC; }
-          [data-testid="stSidebar"] { background: #263B70; }
-          [data-testid="stSidebar"] h1,
-          [data-testid="stSidebar"] h2,
-          [data-testid="stSidebar"] h3,
-          [data-testid="stSidebar"] p,
-          [data-testid="stSidebar"] label { color: #FFFFFF !important; }
-          [data-testid="stSidebar"] [data-baseweb="radio"] > div {
-            border-color: rgba(255,255,255,.28);
-          }
-          [data-testid="stSidebar"] [data-baseweb="radio"] [aria-checked="false"] {
-            color: #FFFFFF !important;
-          }
-          [data-testid="stSidebar"] [data-baseweb="radio"] [aria-checked="false"] svg {
-            fill: #FFFFFF !important;
-            stroke: #FFFFFF !important;
-          }
-          [data-testid="stSidebar"] [data-baseweb="radio"] [aria-checked="true"] {
-            color: #67C5E8 !important;
-            font-weight: 700;
-          }
-          [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,.22); }
-          h1, h2, h3 { color: #263B70 !important; letter-spacing: -.02em; }
-          [data-testid="stMetric"] {
-            background: #FFFFFF;
-            border: 1px solid #DCE5EF;
-            border-top: 3px solid #147EAF;
-            border-radius: 4px;
-            padding: 14px 16px;
-            box-shadow: 0 2px 10px rgba(31,42,68,.06);
-          }
-          [data-testid="stMetricLabel"] { color: #52627C; }
-          [data-testid="stMetricValue"] { color: #263B70; }
-          .stButton > button, [data-testid="stDownloadButton"] > button {
-            background: #147EAF;
-            border-color: #147EAF;
-            border-radius: 3px;
-            color: #FFFFFF;
-            font-weight: 700;
-          }
-          .stButton > button:hover, [data-testid="stDownloadButton"] > button:hover {
-            background: #0C638D;
-            border-color: #0C638D;
-            color: #FFFFFF;
-          }
-          [data-testid="stDataFrame"] { border: 1px solid #DCE5EF; }
           .js-plotly-plot .hoverlayer .bg {
             stroke-width: 3px !important;
             rx: 7px;
@@ -83,6 +37,8 @@ def aplicar_identidad_volta():
         """
     )
 
+
+aplicar_detalles_grafico()
 
 from funciones.cargar_datos import hay_datos_operacionales
 
