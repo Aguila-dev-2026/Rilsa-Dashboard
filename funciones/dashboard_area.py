@@ -331,6 +331,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
         tickmode="array",
         tickvals=marcas_eje_x,
         ticktext=etiquetas_eje_x,
+        showticklabels=False,
         tickangle=0,
         fixedrange=True,
         automargin=True,
