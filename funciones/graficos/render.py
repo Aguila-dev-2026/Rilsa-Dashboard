@@ -110,7 +110,7 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
     grafico_html = fig.to_html(
         full_html=False,
         include_plotlyjs="cdn",
-        config=CONFIGURACION_GRAFICO,
+        config={**CONFIGURACION_GRAFICO, "responsive": False},
     )
     ancho_contenido = f"{ancho_grafico}px"
     html = f"""
@@ -136,6 +136,10 @@ def mostrar_grafico_desplazable(fig, cantidad_periodos):
         .contenido-grafico {{
           width: {ancho_contenido};
           min-width: {ancho_contenido};
+        }}
+        .contenido-grafico .plotly-graph-div {{
+          width: {ancho_contenido} !important;
+          min-width: {ancho_contenido} !important;
         }}
         .js-plotly-plot .hoverlayer .axistext {{
           display: none !important;
