@@ -189,7 +189,7 @@ Commit sugerido: `Convertir el proyecto en un paquete explícito`.
 ## Estado
 
 - [x] Etapa 1 — Centralizar tema y estilos
-- [ ] Etapa 2 — Dividir `dashboard_area.py`
+- [x] Etapa 2 — Dividir `dashboard_area.py`
 - [ ] Etapa 3 — Separar interfaz y lógica de dominio
 - [ ] Etapa 4 — Extraer componentes reutilizables
 - [ ] Etapa 5 — Separar páginas
