@@ -3,7 +3,11 @@ from pathlib import Path
 import streamlit as st
 
 from funciones.configuracion import obtener_configuracion
-from funciones.ui.componentes import aplicar_detalles_grafico, mostrar_ruta_origen
+from funciones.ui.componentes import (
+    aplicar_detalles_grafico,
+    mostrar_mensaje_actualizacion,
+    mostrar_ruta_origen,
+)
 
 RAIZ_PROYECTO = Path(__file__).resolve().parent
 CARPETA_DATOS = RAIZ_PROYECTO / "datos"
@@ -46,10 +50,7 @@ st.sidebar.caption(
     else "Entorno: local · SQLite"
 )
 
-mensaje_actualizacion = st.session_state.pop("mensaje_actualizacion", None)
-if mensaje_actualizacion:
-    tipo_mensaje, texto_mensaje = mensaje_actualizacion
-    getattr(st.sidebar, tipo_mensaje)(texto_mensaje)
+mostrar_mensaje_actualizacion()
 
 mostrar_actualizacion = (
     not CONFIGURACION.es_nube or CONFIGURACION.sincronizacion_manual

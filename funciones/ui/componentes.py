@@ -27,3 +27,11 @@ def mostrar_ruta_origen(ruta: str | Path) -> Path:
     """Muestra rutas relativas cuando pertenecen al proyecto actual."""
     ruta = Path(ruta)
     return ruta.relative_to(Path.cwd()) if ruta.is_relative_to(Path.cwd()) else ruta
+
+
+def mostrar_mensaje_actualizacion() -> None:
+    """Muestra y consume el mensaje de actualización guardado en sesión."""
+    mensaje = st.session_state.pop("mensaje_actualizacion", None)
+    if mensaje:
+        tipo_mensaje, texto_mensaje = mensaje
+        getattr(st.sidebar, tipo_mensaje)(texto_mensaje)
