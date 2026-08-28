@@ -20,44 +20,13 @@ SECCIONES = {
 st.set_page_config(page_title="Planta RILES", layout="wide")
 
 
-def aplicar_identidad_volta(tema):
-    """Aplica una paleta aislada para no mezclar los estilos claro y oscuro."""
-    oscuro = tema == "Oscuro"
-    variables = (
-        {
-            "fondo": "#000000", "panel": "#1B2A38", "panel_sec": "#233646",
-            "texto": "#F1F6FA", "muted": "#B7C8D6", "linea": "#385064",
-            "sidebar": "#0C1420", "sidebar_panel": "#172333", "azul": "#3FA9D5",
-            "celeste": "#7DD8F3", "azul_hover": "#2C8FBC",
-        }
-        if oscuro else {
-            "fondo": "#F7F9FC", "panel": "#FFFFFF", "panel_sec": "#FFFFFF",
-            "texto": "#263B70", "muted": "#52627C", "linea": "#DCE5EF",
-            "sidebar": "#263B70", "sidebar_panel": "#1F315D", "azul": "#147EAF",
-            "celeste": "#67C5E8", "azul_hover": "#0C638D",
-        }
-    )
+def aplicar_identidad_volta():
+    """Aplica la identidad visual clara del dashboard."""
     st.html(
-        """<style>:root { --fondo:""" + variables["fondo"] + "; --panel:" + variables["panel"]
-        + "; --panel-sec:" + variables["panel_sec"] + "; --texto:" + variables["texto"]
-        + "; --muted:" + variables["muted"] + "; --linea:" + variables["linea"]
-        + "; --sidebar:" + variables["sidebar"] + "; --sidebar-panel:" + variables["sidebar_panel"]
-        + "; --azul:" + variables["azul"] + "; --celeste:" + variables["celeste"]
-        + "; --azul-hover:" + variables["azul_hover"] + "; }</style>"""
-        + """
+        """
         <style>
-          [data-testid="stAppViewContainer"],
-          [data-testid="stApp"],
-          [data-testid="stMain"],
-          [data-testid="stAppViewContainer"] .main,
-          [data-testid="stAppViewContainer"] .block-container {
-            background: var(--fondo) !important;
-            color: var(--texto) !important;
-          }
-          header[data-testid="stHeader"] {
-            background: color-mix(in srgb, var(--fondo) 92%, transparent) !important;
-          }
-          [data-testid="stSidebar"] { background: var(--sidebar); }
+          [data-testid="stAppViewContainer"] { background: #F7F9FC; }
+          [data-testid="stSidebar"] { background: #263B70; }
           [data-testid="stSidebar"] h1,
           [data-testid="stSidebar"] h2,
           [data-testid="stSidebar"] h3,
@@ -74,88 +43,34 @@ def aplicar_identidad_volta(tema):
             stroke: #FFFFFF !important;
           }
           [data-testid="stSidebar"] [data-baseweb="radio"] [aria-checked="true"] {
-            color: var(--celeste) !important;
+            color: #67C5E8 !important;
             font-weight: 700;
           }
           [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,.22); }
-          h1, h2, h3,
-          [data-testid="stAppViewContainer"] p,
-          [data-testid="stAppViewContainer"] label,
-          [data-testid="stAppViewContainer"] [data-testid="stCaptionContainer"] {
-            color: var(--texto) !important;
-          }
-          h1, h2, h3 { letter-spacing: -.02em; }
-          [data-testid="stAppViewContainer"] [data-testid="stCaptionContainer"] {
-            color: var(--muted) !important;
-          }
-          [data-testid="stVerticalBlockBorderWrapper"],
-          [data-testid="stExpander"],
-          [data-testid="stForm"] {
-            background: var(--panel) !important;
-            border-color: var(--linea) !important;
-            box-shadow: 0 8px 24px rgba(0,0,0,.16);
-          }
+          h1, h2, h3 { color: #263B70 !important; letter-spacing: -.02em; }
           [data-testid="stMetric"] {
-            background: var(--panel);
-            border: 1px solid var(--linea);
-            border-top: 3px solid var(--azul);
-            border-radius: 8px;
+            background: #FFFFFF;
+            border: 1px solid #DCE5EF;
+            border-top: 3px solid #147EAF;
+            border-radius: 4px;
             padding: 14px 16px;
-            box-shadow: 0 8px 22px rgba(0,0,0,.15);
+            box-shadow: 0 2px 10px rgba(31,42,68,.06);
           }
-          [data-testid="stMetricLabel"] { color: var(--muted); }
-          [data-testid="stMetricValue"] { color: var(--texto); }
+          [data-testid="stMetricLabel"] { color: #52627C; }
+          [data-testid="stMetricValue"] { color: #263B70; }
           .stButton > button, [data-testid="stDownloadButton"] > button {
-            background: var(--azul);
-            border-color: var(--azul);
+            background: #147EAF;
+            border-color: #147EAF;
             border-radius: 3px;
             color: #FFFFFF;
             font-weight: 700;
           }
           .stButton > button:hover, [data-testid="stDownloadButton"] > button:hover {
-            background: var(--azul-hover);
-            border-color: var(--azul-hover);
+            background: #0C638D;
+            border-color: #0C638D;
             color: #FFFFFF;
           }
-          [data-testid="stDataFrame"] { border: 1px solid var(--linea); }
-          [data-testid="stDataFrame"],
-          [data-testid="stTable"],
-          [data-testid="stPlotlyChart"] {
-            background: var(--panel) !important;
-            border-radius: 8px;
-          }
-          [data-testid="stAppViewContainer"] [data-baseweb="select"] > div,
-          [data-testid="stAppViewContainer"] [data-baseweb="input"] > div,
-          [data-testid="stAppViewContainer"] input,
-          [data-testid="stAppViewContainer"] textarea {
-            background: var(--panel-sec) !important;
-            border-color: var(--linea) !important;
-            color: var(--texto) !important;
-          }
-          [data-testid="stSidebar"] [data-baseweb="select"] > div,
-          [data-testid="stSidebar"] [data-baseweb="input"] > div,
-          [data-testid="stSidebar"] input {
-            background: var(--sidebar-panel) !important;
-            border-color: rgba(255,255,255,.28) !important;
-            color: #FFFFFF !important;
-          }
-          [data-testid="stSidebar"] [data-baseweb="select"] svg,
-          [data-testid="stSidebar"] [data-baseweb="input"] svg {
-            color: #FFFFFF !important;
-            fill: #FFFFFF !important;
-          }
-          [data-baseweb="popover"] [role="listbox"],
-          [data-baseweb="menu"] {
-            background: var(--panel) !important;
-            color: var(--texto) !important;
-            border: 1px solid var(--linea) !important;
-          }
-          [data-baseweb="popover"] [role="option"] {
-            color: var(--texto) !important;
-          }
-          [data-testid="stAlert"] {
-            border-color: var(--linea) !important;
-          }
+          [data-testid="stDataFrame"] { border: 1px solid #DCE5EF; }
           .js-plotly-plot .hoverlayer .bg {
             stroke-width: 3px !important;
             rx: 7px;
@@ -179,12 +94,7 @@ if CONFIGURACION.es_nube and CONFIGURACION.faltantes_base_datos():
 st.title("📊 Dashboard Operacional Planta RILES")
 
 st.sidebar.title("Menú Planta RILES")
-tema = st.sidebar.selectbox(
-    "Apariencia",
-    ["Claro", "Oscuro"],
-    key="tema_apariencia",
-)
-aplicar_identidad_volta(tema)
+aplicar_identidad_volta()
 pagina = st.sidebar.radio(
     "Selecciona una sección",
     list(SECCIONES),
