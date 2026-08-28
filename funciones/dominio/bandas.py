@@ -97,6 +97,8 @@ def resaltar_valores_fuera_de_rango(
                 size=8,
                 line=dict(color="#FFFFFF", width=1.4),
             ),
-            hovertemplate="Valor fuera de rango: %{y:,.2f}<extra></extra>",
+            hovertemplate="<b>%{x|%d/%m/%Y}</b><br>"
+            "Valor fuera de rango: %{y:,.2f}<extra></extra>",
         )
         primer_tramo = False
+

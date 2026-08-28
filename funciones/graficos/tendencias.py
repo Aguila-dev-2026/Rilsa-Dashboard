@@ -28,7 +28,10 @@ def agregar_tendencia(fig, datos, parametro, unidad):
         mode="lines",
         name=f"Tendencia · {metodo}",
         line=dict(color=COBRE, width=3.2, dash="dot"),
-        hovertemplate=f"Tendencia: %{{y:,.2f}}{sufijo_unidad}<extra></extra>",
+        hovertemplate=(
+            "<b>%{x|%d/%m/%Y}</b><br>"
+            f"Tendencia: %{{y:,.2f}}{sufijo_unidad}<extra></extra>"
+        ),
     )
     fig.update_layout(
         legend=dict(
@@ -40,3 +43,4 @@ def agregar_tendencia(fig, datos, parametro, unidad):
         )
     )
     return metodo
+

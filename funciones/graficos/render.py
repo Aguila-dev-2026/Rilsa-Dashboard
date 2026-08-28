@@ -18,7 +18,10 @@ def aplicar_estilo_premium(fig, tipo_grafico, parametro, unidad):
     borde_marcador = paleta_grafico(tema_nativo_oscuro())["borde_marcador"]
     etiqueta_valor = f"%{{y:,.2f}} {unidad}".strip()
     fig.update_traces(
-        hovertemplate=f"{parametro}: {etiqueta_valor}<extra></extra>"
+        hovertemplate=(
+            "<b>%{x|%d/%m/%Y}</b><br>"
+            f"{parametro}: {etiqueta_valor}<extra></extra>"
+        )
     )
     if tipo_grafico == "Barras":
         fig.update_traces(
