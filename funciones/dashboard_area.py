@@ -346,6 +346,7 @@ def mostrar_dashboard_area(nombre_area, titulo):
         tickvals=marcas_eje_x,
         ticktext=etiquetas_eje_x,
         tickangle=0,
+        unifiedhovertitle=dict(text=""),
         fixedrange=True,
         automargin=True,
     )
